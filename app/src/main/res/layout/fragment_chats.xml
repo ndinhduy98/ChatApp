@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="chatGroupsViewModel"
+            type="com.freezer.chatapp.data.viewmodel.ChatGroupsViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.main.chats.ChatsFragment">
+
+        <TextView
+            android:id="@+id/textViewTitleChats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="@string/title_chats"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <ImageButton
+            android:id="@+id/imageButtonMarkAllRead"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:background="@null"
+            android:src="@drawable/ic_mark_all_read"
+            app:layout_constraintBottom_toBottomOf="@id/textViewTitleChats"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/textViewTitleChats" />
+
+        <ImageButton
+            android:id="@+id/imageButtonNewConversation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:background="@null"
+            android:src="@drawable/ic_new_conversation"
+            app:layout_constraintBottom_toBottomOf="@id/textViewTitleChats"
+            app:layout_constraintEnd_toStartOf="@+id/imageButtonMarkAllRead"
+            app:layout_constraintTop_toTopOf="@id/textViewTitleChats" />
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchViewChats"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@+id/textViewTitleChats" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewChatGroups"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:overScrollMode="never"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/searchViewChats"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_chat_group"
+            tools:itemCount="5"
+            app:recyclerViewData="@{chatGroupsViewModel.chatGroups}"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_contacts">
+
+    <fragment
+        android:id="@+id/navigation_contacts"
+        android:name="com.freezer.chatapp.ui.main.contacts.ContactsFragment"
+        android:label="@string/title_contacts"
+        tools:layout="@layout/fragment_contacts" >
+        <action
+            android:id="@+id/action_navigation_contacts_to_navigation_add_contact"
+            app:destination="@id/navigation_add_contact" />
+        <action
+            android:id="@+id/action_navigation_contacts_to_navigation_conversation"
+            app:destination="@id/navigation_conversation" />
+        <action
+            android:id="@+id/action_navigation_contacts_to_navigation_pending_contacts"
+            app:destination="@+id/navigation_pending_contacts"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_add_contact"
+        android:name="com.freezer.chatapp.ui.main.contacts.add_contact.AddContactFragment"
+        android:label="@string/title_add_contact"
+        tools:layout="@layout/fragment_add_contact"/>
+
+    <fragment
+        android:id="@+id/navigation_pending_contacts"
+        android:name="com.freezer.chatapp.ui.main.contacts.pending_contacts.PendingContactsFragment"
+        android:label="@string/title_pending_contacts"
+        tools:layout="@layout/fragments_pending_contacts"/>
+
+    <fragment
+        android:id="@+id/navigation_chats"
+        android:name="com.freezer.chatapp.ui.main.chats.ChatsFragment"
+        android:label="@string/title_chats"
+        tools:layout="@layout/fragment_chats" >
+        <action
+            android:id="@+id/action_navigation_chats_to_navigation_conversation"
+            app:destination="@id/navigation_conversation" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_conversation"
+        android:name="com.freezer.chatapp.ui.main.chats.conversation.ConversationFragment"
+        tools:layout="@layout/fragment_conversation" />
+
+    <fragment
+        android:id="@+id/navigation_more"
+        android:name="com.freezer.chatapp.ui.main.more.MoreFragment"
+        android:label="@string/title_more"
+        tools:layout="@layout/fragment_more" />
+</navigation>

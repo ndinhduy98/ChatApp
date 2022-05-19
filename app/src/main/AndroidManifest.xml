@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.freezer.chatapp">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_message"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/ic_message"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ChatApp">
+        <activity android:name=".ui.SplashActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.main.MainActivity"
+            android:exported="true">
+        </activity>
+        <activity
+            android:name=".ui.login.PhoneAuthActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+        </activity>
+        <activity
+            android:name=".ui.login.VerifySmsCodeActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.login.YourProfileActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.call.VideoCallingActivity"
+            android:exported="true"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.call.AudioCallingActivity"
+            android:exported="true"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustResize" />
+
+        <service
+            android:name=".fcm.FirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="@string/fcm_notification_channel" />
+
+    </application>
+
+</manifest>

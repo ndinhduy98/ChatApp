@@ -1,0 +1,70 @@
+<layout xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="message"
+            type="com.freezer.chatapp.data.model.Message" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_send_message"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/textViewText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxWidth="250dp"
+                android:padding="16dp"
+                android:text="@{message.text}"
+                android:textColor="@android:color/white"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Send Message" />
+
+            <TextView
+                android:id="@+id/textViewDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:textSize="12sp"
+                app:layout_constraintBottom_toBottomOf="@+id/textViewText"
+                app:layout_constraintEnd_toStartOf="@+id/textViewDivider"
+                tools:text="16:50"
+                android:text="@{message.createdAt.toString()}"/>
+
+            <TextView
+                android:id="@+id/textViewDivider"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="·"
+                app:layout_constraintBottom_toBottomOf="@+id/textViewText"
+                app:layout_constraintEnd_toStartOf="@+id/textViewDeliveryReceipt"/>
+
+            <TextView
+                android:id="@+id/textViewDeliveryReceipt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="@{message.deliveryStatus}"
+                android:textSize="12sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                tools:text="Read" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>

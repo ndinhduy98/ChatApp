@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="chatGroup"
+            type="com.freezer.chatapp.data.model.ChatGroup" />
+    </data>
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp">
+
+        <FrameLayout
+            android:id="@+id/containerItemContactAvatar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+            <ImageView
+                android:id="@+id/imageViewChatItemContactAvatar"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:src="@drawable/ic_example_avatar"/>
+
+            <ImageView
+                android:id="@+id/imageViewChatItemContactStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_status_online"
+                android:layout_gravity="end"/>
+
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/textViewItemChatGroupName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="8dp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@id/containerItemContactAvatar"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Andrew" />
+
+        <TextView
+            android:id="@+id/textViewItemContactLastMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="@+id/textViewItemChatGroupName"
+            app:layout_constraintTop_toBottomOf="@+id/textViewItemChatGroupName"
+            tools:text="Good morning, did you sleep well?" />
+
+        <TextView
+            android:id="@+id/textViewItemChatLastMessageTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Today" />
+
+        <TextView
+            android:id="@+id/textViewItemChatUnreadCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/ic_round_text_view"
+            android:paddingHorizontal="8dp"
+            android:textColor="#001A83"
+            app:layout_constraintEnd_toEndOf="@+id/textViewItemChatLastMessageTime"
+            app:layout_constraintTop_toBottomOf="@id/textViewItemChatLastMessageTime"
+            tools:text="1" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

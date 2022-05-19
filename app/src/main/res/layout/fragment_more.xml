@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+    <data>
+        <variable
+            name="viewModel"
+            type="com.freezer.chatapp.data.viewmodel.MyProfileViewModel" />
+    </data>
+    <androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.main.more.MoreFragment">
+
+        <TextView
+            android:id="@+id/textViewTitleMore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="@string/title_more"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/imageViewMoreAvatar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textViewTitleMore"
+            android:src="@drawable/ic_avatar"
+            app:imageUrl="@{viewModel.myProfile.avatarUrl}"/>
+
+        <TextView
+            android:id="@+id/textViewMoreName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            app:layout_constraintStart_toEndOf="@+id/imageViewMoreAvatar"
+            app:layout_constraintTop_toTopOf="@+id/imageViewMoreAvatar"
+            tools:text="Almarya Zamzamy"
+            android:text='@{viewModel.myProfile.firstName+" "+viewModel.myProfile.lastName}'/>
+
+        <TextView
+            android:id="@+id/textViewMorePhoneNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toBottomOf="@+id/imageViewMoreAvatar"
+            app:layout_constraintStart_toStartOf="@+id/textViewMoreName"
+            app:layout_constraintTop_toBottomOf="@+id/textViewMoreName"
+            tools:text="+62 1309 - 1710 - 1920"
+            android:text="@{viewModel.myProfile.phoneNumber}"/>
+
+        <ImageButton
+            android:id="@+id/imageButtonMoreProfileNext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            app:layout_constraintBottom_toBottomOf="@+id/imageViewMoreAvatar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageViewMoreAvatar"
+            android:src="@drawable/ic_next"
+            android:background="@null"/>
+
+        <ImageView
+            android:id="@+id/imageViewMoreAccount"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageViewMoreAvatar"
+            android:src="@drawable/ic_account"/>
+
+        <TextView
+            android:id="@+id/textViewMoreAccount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="48dp"
+            android:text="@string/text_more_account"
+            app:layout_constraintBottom_toBottomOf="@+id/imageViewMoreAccount"
+            app:layout_constraintStart_toEndOf="@+id/imageViewMoreAccount"
+            app:layout_constraintTop_toTopOf="@+id/imageViewMoreAccount" />
+
+        <ImageButton
+            android:id="@+id/imageButtonMoreAccountNext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:src="@drawable/ic_next"
+            app:layout_constraintBottom_toBottomOf="@+id/imageViewMoreAccount"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageViewMoreAccount"
+            android:background="@null"/>
+
+        <ImageView
+            android:id="@+id/imageViewMoreChats"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageViewMoreAccount"
+            android:src="@drawable/ic_chats"/>
+
+        <TextView
+            android:id="@+id/textViewMoreChats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="48dp"
+            android:text="@string/text_more_chats"
+            app:layout_constraintBottom_toBottomOf="@+id/imageViewMoreChats"
+            app:layout_constraintStart_toEndOf="@+id/imageViewMoreChats"
+            app:layout_constraintTop_toTopOf="@+id/imageViewMoreChats" />
+
+        <ImageButton
+            android:id="@+id/imageButtonMoreChatsNext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:src="@drawable/ic_next"
+            app:layout_constraintBottom_toBottomOf="@+id/imageViewMoreChats"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageViewMoreChats"
+            android:background="@null"/>
+
+        <ImageView
+            android:id="@+id/imageViewMoreAppearance"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="32dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageViewMoreChats"
+            android:src="@drawable/ic_appearance"/>
+
+        <TextView
+            android:id="@+id/textViewMoreAppearance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="48dp"
+            android:text="@string/text_more_appearance"
+            app:layout_constraintBottom_toBottomOf="@+id/imageViewMoreAppearance"
+            app:layout_constraintStart_toEndOf="@+id/imageViewMoreAppearance"
+            app:layout_constraintTop_toTopOf="@+id/imageViewMoreAppearance" />
+
+        <ImageButton
+            android:id="@+id/imageButtonMoreAppearanceNext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:src="@drawable/ic_next"
+            app:layout_constraintBottom_toBottomOf="@+id/imageViewMoreAppearance"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageViewMoreAppearance"
+            android:background="@null"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

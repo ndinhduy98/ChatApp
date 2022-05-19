@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:keepScreenOn="true">
+
+        <ImageView
+            android:id="@+id/imageViewCallAvatar"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:src="@drawable/ic_example_avatar"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.20" />
+
+        <TextView
+            android:id="@+id/textViewCallName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:textSize="24sp"
+            tools:text="Name"
+            app:layout_constraintEnd_toEndOf="@+id/imageViewCallAvatar"
+            app:layout_constraintStart_toStartOf="@+id/imageViewCallAvatar"
+            app:layout_constraintTop_toBottomOf="@+id/imageViewCallAvatar" />
+
+        <Chronometer
+            android:id="@+id/chronometerCall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|top"
+            android:layout_marginTop="16dp"
+            app:layout_constraintEnd_toEndOf="@+id/textViewCallName"
+            app:layout_constraintStart_toStartOf="@+id/textViewCallName"
+            app:layout_constraintTop_toBottomOf="@+id/textViewCallName" />
+
+        <TextView
+            android:id="@+id/textViewCallStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Connecting"
+            app:layout_constraintEnd_toEndOf="@+id/chronometerCall"
+            app:layout_constraintStart_toStartOf="@+id/chronometerCall"
+            app:layout_constraintTop_toBottomOf="@+id/chronometerCall" />
+
+        <androidx.appcompat.widget.AppCompatToggleButton
+            android:id="@+id/tgCallSpeaker"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginStart="32dp"
+            android:background="@drawable/ic_round_button"
+            android:button="@drawable/check_speaker"
+            android:textOn="@null"
+            android:textOff="@null"
+            android:text="@null"
+            app:layout_constraintBottom_toBottomOf="@+id/imageButtonCallEnd"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageButtonCallEnd" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/imageButtonCallEnd"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginBottom="96dp"
+            app:srcCompat="@drawable/bg_call_end"
+            android:background="@null"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatToggleButton
+            android:id="@+id/tgCallMic"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginEnd="32dp"
+            android:background="@drawable/ic_round_button"
+            android:button="@drawable/check_mic"
+            android:textOn="@null"
+            android:textOff="@null"
+            android:text="@null"
+            app:layout_constraintBottom_toBottomOf="@+id/imageButtonCallEnd"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageButtonCallEnd" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

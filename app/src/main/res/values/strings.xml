@@ -1,0 +1,56 @@
+<resources>
+    <string name="app_name">ChatApp</string>
+    <string name="fcm_notification_channel">FCM Notification Channel</string>
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">"Welcome !"</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="login_enter_phone_number">Enter Your Phone Number</string>
+    <string name="login_enter_phone_number_instruction">Please confirm your country code and enter\n your phone number</string>
+    <string name="button_continue">Continue</string>
+    <string name="login_enter_sms_code">Enter Code</string>
+    <string name="login_enter_sms_code_instruction">We have sent you an SMS with the code to </string>
+    <string name="text_resend_sms_code">Resend Code</string>
+    <string name="your_profile">Your Profile</string>
+    <string name="text_first_name">First Name (Required)</string>
+    <string name="text_last_name">Last Name (Optional)</string>
+    <string name="text_save">Save</string>
+    <string name="text_phone_number">Phone Number</string>
+    <string name="title_contacts">Contacts</string>
+    <string name="title_chats">Chats</string>
+    <string name="title_more">More</string>
+    <string name="title_add_contact">Add Contact</string>
+    <string name="title_pending_contacts">Pending Contacts</string>
+    <string name="text_enter_phone_number">Enter Phone Number</string>
+    <string name="text_enter_text">Enter text</string>
+    <string name="text_more_account">Account</string>
+    <string name="text_more_chats">Chats</string>
+    <string name="text_more_appearance">Appearance</string>
+
+    <!-- Button   -->
+    <string name="button_allow">Allow</string>
+    <string name="button_deny">Deny</string>
+
+    <!-- WebRTC Status   -->
+    <string name="status_unknown">Unknown</string>
+    <string name="status_connecting">Connecting …</string>
+    <string name="status_connected">Connected!</string>
+    <string name="status_matching">Matching …</string>
+    <string name="status_failed">Failed</string>
+    <string name="start">Start</string>
+    <string name="status_finished">Finished</string>
+    <string name="status_dialing">Dialing</string>
+
+    <!-- Permissions   -->
+    <string name="permission_camera_rationale">Camera permission is needed to show the camera preview.</string>
+    <string name="permission_camera_denied">Camera permission was denied. Please consider granting it in order to access the camera!</string>
+    <string name="permission_camera_never_ask_again">Camera permission was denied with never ask again.</string>
+
+    <string name="permission_record_audio_rationale">Record audio permission is needed to perform audio call.</string>
+    <string name="permission_record_audio_denied">Record audio permission was denied. Please consider granting it in order to access the microphone!</string>
+    <string name="permission_record_audio_never_ask_again">Record audio permission was denied with never ask again.</string>
+</resources>

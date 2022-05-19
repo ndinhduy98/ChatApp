@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="4dp">
+
+    <FrameLayout
+        android:id="@+id/containerItemContactAvatar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/imageViewItemContactAvatar"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            tools:src="@drawable/ic_example_avatar" />
+
+        <ImageView
+            android:id="@+id/imageViewItemContactStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_status_online"
+            android:layout_gravity="end"/>
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/textViewItemContactName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="8dp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@id/containerItemContactAvatar"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Andrew" />
+
+    <TextView
+        android:id="@+id/textViewItemContactStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="@+id/textViewItemContactName"
+        app:layout_constraintTop_toBottomOf="@+id/textViewItemContactName"
+        tools:text="Online" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
