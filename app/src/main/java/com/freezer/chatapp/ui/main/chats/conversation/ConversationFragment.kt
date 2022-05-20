@@ -3,7 +3,6 @@ package com.freezer.chatapp.ui.main.chats.conversation
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -63,7 +62,7 @@ class ConversationFragment : BaseFragment() {
         val chatGroup = bundle?.getParcelable<ChatGroup>("chat_group")
 
         val chatGroupMembers = bundle?.getStringArrayList("chat_group_members")
-        val chatGroupName = bundle?.getString("chat_group_name")
+        var chatGroupName = bundle?.getString("chat_group_name")
 
         // Retrieve group
         database = Firebase.firestore
@@ -74,8 +73,8 @@ class ConversationFragment : BaseFragment() {
         binding.conversationViewModel = conversationViewModel
         binding.lifecycleOwner = viewLifecycleOwner
 
-        if(profile != null) {
-            CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO).launch {
+            if (profile != null) {
                 val chatGroups = database.collection("groups")
                     .whereArrayContains("members", user.uid).get().await()
                     .toObjects(ChatGroup::class.java)
@@ -91,6 +90,7 @@ class ConversationFragment : BaseFragment() {
                         id = newChatGroupRef.id,
                         createdBy = user.uid,
                         members = arrayListOf(user.uid, profile.uid),
+                        profileRef = database.collection("profiles").document(profile.uid),
                         type = ChatGroupType.PRIVATE_CHAT
                     )
                     newChatGroupRef.set(newChatGroup)
@@ -98,43 +98,37 @@ class ConversationFragment : BaseFragment() {
                 } else {
                     conversationViewModel.groupId = chatGroups[index].id
                 }
-                conversationViewModel.conversationName.postValue("${profile.firstName} ${profile.lastName}")
-                initializeConversationRecyclerView()
+                chatGroupName = "${profile.firstName} ${profile.lastName}"
             }
+            if (chatGroupMembers != null) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    // Add current user to group
+                    chatGroupMembers.add(user.uid)
+
+                    // Create group
+                    val newChatGroupRef = database.collection("groups").document()
+                    val newChatGroup = ChatGroup(
+                        id = newChatGroupRef.id,
+                        createdBy = user.uid,
+                        members = chatGroupMembers,
+                        type = ChatGroupType.GROUP_CHAT,
+                        name = chatGroupName
+                    )
+                    newChatGroupRef.set(newChatGroup)
+                    conversationViewModel.groupId = newChatGroupRef.id
+                }
+            }
+
+            if (chatGroup != null) {
+                conversationViewModel.groupId = chatGroup.id
+            }
+            initializeConversationRecyclerView()
         }
 
-        if(chatGroupMembers != null) {
-            CoroutineScope(Dispatchers.IO).launch {
-                // Add current user to group
-                chatGroupMembers.add(user.uid)
-
-                // Create group
-                val newChatGroupRef = database.collection("groups").document()
-                val newChatGroup = ChatGroup(
-                    id = newChatGroupRef.id,
-                    createdBy = user.uid,
-                    members = chatGroupMembers,
-                    type = ChatGroupType.GROUP_CHAT,
-                    name = chatGroupName
-                )
-                newChatGroupRef.set(newChatGroup)
-                conversationViewModel.groupId = newChatGroupRef.id
-                initializeConversationRecyclerView()
-            }
-        }
-
-        if (chatGroup != null) {
-            conversationViewModel.groupId = chatGroup.id
-            if (chatGroup.type == ChatGroupType.PRIVATE_CHAT) {
-                val targetProfileUid = chatGroup.members?.find { it != user.uid }
-                // Retrieve contacts list
-            } else {
-
-            }
-        }
+        conversationViewModel.conversationName.postValue(chatGroupName)
 
         binding.imageButtonConversationSend.setOnClickListener {
-            if(TextUtils.isEmpty(binding.editTextConversationContent.text))
+            if (TextUtils.isEmpty(binding.editTextConversationContent.text))
                 return@setOnClickListener
             database.collection("message")
                 .document(conversationViewModel.groupId)
@@ -150,9 +144,10 @@ class ConversationFragment : BaseFragment() {
             binding.editTextConversationContent.text?.clear()
         }
 
-        binding.editTextConversationContent.setOnFocusChangeListener{ _, hasFocus ->
-            if(hasFocus) {
-                binding.recyclerViewConversation.smoothScrollToPosition(groupieAdapter.itemCount)
+        binding.editTextConversationContent.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                if (this::groupieAdapter.isInitialized)
+                    binding.recyclerViewConversation.smoothScrollToPosition(groupieAdapter.itemCount)
             }
         }
 
@@ -188,7 +183,7 @@ class ConversationFragment : BaseFragment() {
 
     override fun onResume() {
         super.onResume()
-        if(this::groupieAdapter.isInitialized) {
+        if (this::groupieAdapter.isInitialized) {
             binding.recyclerViewConversation
                 .smoothScrollToPosition(groupieAdapter.itemCount)
         }
@@ -211,7 +206,7 @@ class ConversationFragment : BaseFragment() {
         database.collection("message")
             .document(conversationViewModel.groupId)
             .collection("messages")
-            .addSnapshotListener { value, error ->
+            .addSnapshotListener { value, _ ->
                 if (isFirstInit) {
                     isFirstInit = false
                     val messages = value?.documents

@@ -137,12 +137,6 @@ class MainActivity : AppCompatActivity() {
                     if (snapshot != null) {
                         for (doc in snapshot) {
                             val chatGroup = doc.toObject(ChatGroup::class.java)
-                            if(chatGroup.type == ChatGroupType.PRIVATE_CHAT) {
-                                // Add profile field
-                                // Get target uid
-                                val targetUid = chatGroup.members?.find { it != user.uid }
-                                chatGroup.profile = contactsViewModel.contactProfiles.find { it.uid == targetUid }
-                            }
                             chatGroupsViewModel.add(chatGroup)
                         }
                     }
