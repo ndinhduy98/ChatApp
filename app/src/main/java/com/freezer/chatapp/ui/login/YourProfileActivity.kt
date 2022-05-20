@@ -122,10 +122,8 @@ class YourProfileActivity : AppCompatActivity() {
                             avatarUrl = if(uploadTask?.error == null) uploadTask!!.metadata!!.path else "")
                         database.collection("profiles").document(user.uid).set(profile)
                             .addOnSuccessListener {
-                                database.collection("pending_requests").document(user.uid).set({}).addOnSuccessListener {
-                                    Toast.makeText(this@YourProfileActivity, "Save profile successfully", Toast.LENGTH_SHORT).show()
-                                    startActivity(Intent(this@YourProfileActivity, MainActivity::class.java))
-                                }
+                                Toast.makeText(this@YourProfileActivity, "Save profile successfully", Toast.LENGTH_SHORT).show()
+                                startActivity(Intent(this@YourProfileActivity, MainActivity::class.java))
                             }
                             .addOnFailureListener {
                                 Toast.makeText(this@YourProfileActivity, "Error while saving profile", Toast.LENGTH_SHORT).show()

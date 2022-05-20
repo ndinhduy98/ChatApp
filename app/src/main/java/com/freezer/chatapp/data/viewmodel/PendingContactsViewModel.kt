@@ -1,12 +1,15 @@
 package com.freezer.chatapp.data.viewmodel
 
+import android.os.Build
 import android.view.View
+import androidx.annotation.RequiresApi
 import androidx.databinding.Bindable
 import androidx.databinding.Observable
 import androidx.databinding.PropertyChangeRegistry
 import androidx.lifecycle.ViewModel
 import com.freezer.chatapp.BR
 import com.freezer.chatapp.data.model.PendingContact
+import com.freezer.chatapp.data.model.PendingContactRequest
 
 class PendingContactsViewModel : Observable, ViewModel() {
     @get:Bindable
@@ -23,6 +26,17 @@ class PendingContactsViewModel : Observable, ViewModel() {
 
     fun remove(pendingContact: PendingContact) {
         pendingContacts.remove(pendingContact)
+        pendingIndicator = if (pendingContacts.isNotEmpty()) View.VISIBLE else View.GONE
+        callbacks.notifyChange(this, BR.pendingContacts)
+        callbacks.notifyChange(this, BR.pendingIndicator)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun remove(pendingContactRequest: PendingContactRequest) {
+        pendingContacts.removeIf { pendingContact ->
+            pendingContact.request.from == pendingContactRequest.from
+                    && pendingContact.request.to == pendingContactRequest.to
+        }
         pendingIndicator = if (pendingContacts.isNotEmpty()) View.VISIBLE else View.GONE
         callbacks.notifyChange(this, BR.pendingContacts)
         callbacks.notifyChange(this, BR.pendingIndicator)

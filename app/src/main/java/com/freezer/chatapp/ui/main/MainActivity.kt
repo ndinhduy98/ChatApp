@@ -17,6 +17,7 @@ import com.freezer.chatapp.data.viewmodel.PendingContactsViewModel
 import com.freezer.chatapp.databinding.ActivityMainBinding
 import com.freezer.chatapp.utils.FirestoreUtils
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -63,34 +64,51 @@ class MainActivity : AppCompatActivity() {
         val pendingContactsViewModel = ViewModelProvider(this)[PendingContactsViewModel::class.java]
 
         if (user != null) {
-            database.collection("pending_requests").document(user.uid).addSnapshotListener { snapshot, e ->
-                run {
-                    val snapshotData = snapshot?.data?.get("requests")
-                    if (snapshot != null && snapshotData != null) {
-                        if (snapshotData is HashMap<*, *>) {
-                            val pendingContactSnapshot = snapshotData as HashMap<String, String>
-                            val request = PendingContactRequest(
-                                    from = pendingContactSnapshot.getValue("from"),
-                                    to = pendingContactSnapshot.getValue("to"),
-                                    status = pendingContactSnapshot.getValue("status"))
+            database.collection("pending_requests")
+                .document(user.uid)
+                .collection("requests")
+                .addSnapshotListener { snapshot, _ ->
+                CoroutineScope(Dispatchers.IO).launch {
+//                    if (snapshot != null && snapshotData != null) {
+//                        if (snapshotData is HashMap<*, *>) {
+//                            val pendingContactSnapshot = snapshotData as HashMap<String, String>
+//                            val request = PendingContactRequest(
+//                                    from = pendingContactSnapshot.getValue("from"),
+//                                    to = pendingContactSnapshot.getValue("to"),
+//                                    status = pendingContactSnapshot.getValue("status"))
+//
+//                            if (request.status != PendingContactRequestStatus.PENDING) {
+//                                pendingContactsViewModel.pendingContacts.forEach {
+//                                    if (it.request.from == request.from) {
+//                                        pendingContactsViewModel.remove(it)
+//                                    }
+//                                }
+//                            } else {
+//                                CoroutineScope(Dispatchers.IO).launch {
+//                                    val profile = FirestoreUtils().getProfile(request.from)
+//                                    val pendingContact = PendingContact(profile, request)
+//                                    pendingContactsViewModel.add(pendingContact)
+//                                }
+//                            }
+//
+//                        } else {
+//                            val pendingContacts = FirestoreUtils().parsePendingContacts(snapshotData as ArrayList<HashMap<String, String>>)
+//                            pendingContactsViewModel.pendingContacts = pendingContacts
+//                        }
+//                    }
 
-                            if (request.status != PendingContactRequestStatus.PENDING) {
-                                pendingContactsViewModel.pendingContacts.forEach {
-                                    if (it.request.from == request.from) {
-                                        pendingContactsViewModel.remove(it)
-                                    }
-                                }
-                            } else {
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    val profile = FirestoreUtils().getProfile(request.from)
-                                    val pendingContact = PendingContact(profile, request)
-                                    pendingContactsViewModel.add(pendingContact)
-                                }
+                    val pendingContactRequests = snapshot?.toObjects(PendingContactRequest::class.java)
+                    pendingContactRequests?.forEach { pendingContactRequest ->
+                        val pendingContactProfile = FirestoreUtils().getProfile(pendingContactRequest.from)
+                        val pendingContact = PendingContact(pendingContactProfile, pendingContactRequest)
+                        pendingContactsViewModel.add(pendingContact)
+                    }
+                    snapshot?.documentChanges?.forEach { documentChange ->
+                        if(documentChange.type == DocumentChange.Type.MODIFIED) {
+                            val pendingContactRequest = documentChange.document.toObject(PendingContactRequest::class.java)
+                            if(pendingContactRequest.status != PendingContactRequest.Status.PENDING) {
+                                pendingContactsViewModel.remove(pendingContactRequest)
                             }
-
-                        } else {
-                            val pendingContacts = FirestoreUtils().parsePendingContacts(snapshotData as ArrayList<HashMap<String, String>>)
-                            pendingContactsViewModel.pendingContacts = pendingContacts
                         }
                     }
                 }

@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.freezer.chatapp.data.model.PendingContactRequest
-import com.freezer.chatapp.data.model.PendingContactRequestStatus
 import com.freezer.chatapp.data.model.Profile
 import com.freezer.chatapp.data.viewmodel.ProfilesViewModel
 import com.freezer.chatapp.databinding.FragmentAddContactBinding
@@ -17,7 +16,6 @@ import com.freezer.chatapp.ui.BaseFragment
 import com.freezer.chatapp.ui.main.contacts.ContactAdapter
 import com.freezer.chatapp.ui.main.contacts.ContactItemListener
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
@@ -109,9 +107,12 @@ class AddContactFragment : BaseFragment() {
             val pendingRequest = PendingContactRequest(
                 from = user.uid,
                 to = profile.uid,
-                status = PendingContactRequestStatus.PENDING
+                status = PendingContactRequest.Status.PENDING
             )
-            database.collection("pending_requests").document(profile.uid).update("requests", FieldValue.arrayUnion(pendingRequest))
+            database.collection("pending_requests")
+                .document(profile.uid)
+                .collection("requests")
+                .add(pendingRequest)
                 .addOnSuccessListener {
                     Toast.makeText(context, "Send request successfully", Toast.LENGTH_SHORT).show()
                 }

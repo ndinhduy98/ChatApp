@@ -1,19 +1,16 @@
 package com.freezer.chatapp.ui.main.contacts.pending_contacts
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.freezer.chatapp.data.model.PendingContact
-import com.freezer.chatapp.data.model.PendingContactRequestStatus
+import com.freezer.chatapp.data.model.PendingContactRequest
 import com.freezer.chatapp.data.viewmodel.PendingContactsViewModel
 import com.freezer.chatapp.databinding.FragmentsPendingContactsBinding
 import com.freezer.chatapp.ui.BaseFragment
-import com.freezer.chatapp.utils.FirestoreUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.firestore
@@ -44,7 +41,7 @@ class PendingContactsFragment : BaseFragment() {
         _binding!!.recyclerViewPendingContacts.adapter = context?.let { PendingContactAdapter(it, object : PendingContactItemListener {
             override fun onApprove(pendingContact: PendingContact) {
                 CoroutineScope(Dispatchers.IO).launch {
-                    setPendingContactRequest(pendingContact, PendingContactRequestStatus.APPROVED)
+                    setPendingContactRequest(pendingContact, PendingContactRequest.Status.APPROVED)
                 }
                 // Save to contacts in Firestore
 //                addToContacts(pendingContact)
@@ -52,7 +49,7 @@ class PendingContactsFragment : BaseFragment() {
 
             override fun onReject(pendingContact: PendingContact) {
                 CoroutineScope(Dispatchers.IO).launch {
-                    setPendingContactRequest(pendingContact, PendingContactRequestStatus.REJECTED)
+                    setPendingContactRequest(pendingContact, PendingContactRequest.Status.REJECTED)
                 }
             }
 
@@ -71,27 +68,20 @@ class PendingContactsFragment : BaseFragment() {
         val user = FirebaseAuth.getInstance().currentUser
         val database = Firebase.firestore
         if (user != null) {
-            val documentSnapshot = database.collection("pending_requests").document(user.uid)
+            val queryResults = database.collection("pending_requests")
+                .document(user.uid)
+                .collection("requests")
+                .whereEqualTo("from", pendingContact.request.from)
+                .whereEqualTo("to", pendingContact.request.to)
                 .get().await()
-            val requests = documentSnapshot.get("requests") as ArrayList<HashMap<String, String>>
 
-            val parsedRequests = FirestoreUtils().parsePendingContactsWithoutProfiles(requests)
-
-            parsedRequests.forEach {
-                if(it.from == pendingContact.request.from) {
-                    it.status = status
-                }
+            queryResults.forEach { pendingContactRequest ->
+                database.collection("pending_requests")
+                    .document(user.uid)
+                    .collection("requests")
+                    .document(pendingContactRequest.id)
+                    .update("status", status)
             }
-
-            database.collection("pending_requests").document(user.uid)
-                .update("requests", parsedRequests)
-                .addOnSuccessListener {
-                    Toast.makeText(context, "Successful", Toast.LENGTH_SHORT).show()
-                }
-                .addOnFailureListener {
-                    Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
-                    Log.e("PENDING_CONTACT", "${it.printStackTrace()}")
-                }
         }
     }
 
