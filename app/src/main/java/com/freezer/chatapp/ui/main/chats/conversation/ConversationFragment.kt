@@ -62,6 +62,9 @@ class ConversationFragment : BaseFragment() {
         val profile = bundle?.getParcelable<Profile>("profile")
         val chatGroup = bundle?.getParcelable<ChatGroup>("chat_group")
 
+        val chatGroupMembers = bundle?.getStringArrayList("chat_group_members")
+        val chatGroupName = bundle?.getString("chat_group_name")
+
         // Retrieve group
         database = Firebase.firestore
         user = FirebaseAuth.getInstance().currentUser!!
@@ -71,8 +74,8 @@ class ConversationFragment : BaseFragment() {
         binding.conversationViewModel = conversationViewModel
         binding.lifecycleOwner = viewLifecycleOwner
 
-        CoroutineScope(Dispatchers.IO).launch {
-            if (profile != null) {
+        if(profile != null) {
+            CoroutineScope(Dispatchers.IO).launch {
                 val chatGroups = database.collection("groups")
                     .whereArrayContains("members", user.uid).get().await()
                     .toObjects(ChatGroup::class.java)
@@ -96,17 +99,38 @@ class ConversationFragment : BaseFragment() {
                     conversationViewModel.groupId = chatGroups[index].id
                 }
                 conversationViewModel.conversationName.postValue("${profile.firstName} ${profile.lastName}")
+                initializeConversationRecyclerView()
             }
-            if (chatGroup != null) {
-                conversationViewModel.groupId = chatGroup.id
-                if (chatGroup.type == ChatGroupType.PRIVATE_CHAT) {
-                    val targetProfileUid = chatGroup.members?.find { it != user.uid }
-                    // Retrieve contacts list
-                } else {
+        }
 
-                }
+        if(chatGroupMembers != null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                // Add current user to group
+                chatGroupMembers.add(user.uid)
+
+                // Create group
+                val newChatGroupRef = database.collection("groups").document()
+                val newChatGroup = ChatGroup(
+                    id = newChatGroupRef.id,
+                    createdBy = user.uid,
+                    members = chatGroupMembers,
+                    type = ChatGroupType.GROUP_CHAT,
+                    name = chatGroupName
+                )
+                newChatGroupRef.set(newChatGroup)
+                conversationViewModel.groupId = newChatGroupRef.id
+                initializeConversationRecyclerView()
             }
-            initializeConversationRecyclerView()
+        }
+
+        if (chatGroup != null) {
+            conversationViewModel.groupId = chatGroup.id
+            if (chatGroup.type == ChatGroupType.PRIVATE_CHAT) {
+                val targetProfileUid = chatGroup.members?.find { it != user.uid }
+                // Retrieve contacts list
+            } else {
+
+            }
         }
 
         binding.imageButtonConversationSend.setOnClickListener {
@@ -164,8 +188,10 @@ class ConversationFragment : BaseFragment() {
 
     override fun onResume() {
         super.onResume()
-        binding.recyclerViewConversation
+        if(this::groupieAdapter.isInitialized) {
+            binding.recyclerViewConversation
                 .smoothScrollToPosition(groupieAdapter.itemCount)
+        }
     }
 
     override fun onDestroyView() {

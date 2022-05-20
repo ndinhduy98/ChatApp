@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <variable
+            name="viewModel"
+            type="com.freezer.chatapp.data.viewmodel.ContactsViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ImageButton
+            android:id="@+id/imageButtonBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_back"
+            android:background="@null"
+            android:padding="@dimen/image_button_padding"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textViewTitleCreateGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/title_create_group"
+            android:textSize="20sp"
+            android:layout_marginStart="16dp"
+            app:layout_constraintBottom_toBottomOf="@+id/imageButtonBack"
+            app:layout_constraintStart_toEndOf="@+id/imageButtonBack"
+            app:layout_constraintTop_toTopOf="@+id/imageButtonBack" />
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editTextCreateGroupName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@color/dim_gray"
+            android:hint="@string/text_enter_group_name"
+            android:maxLines="1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textViewTitleCreateGroup" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewCreateGroup"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:overScrollMode="never"
+            app:recyclerViewData="@{viewModel.contactProfiles}"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintBottom_toBottomOf="@id/buttonCreateGroupConfirm"
+            app:layout_constraintTop_toBottomOf="@+id/editTextCreateGroupName"
+            tools:itemCount="5"
+            tools:listitem="@layout/item_contact_create_group" />
+
+        <Button
+            android:id="@+id/buttonCreateGroupConfirm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:text="@string/button_confirm"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

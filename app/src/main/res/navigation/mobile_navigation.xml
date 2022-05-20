@@ -41,6 +41,20 @@
         <action
             android:id="@+id/action_navigation_chats_to_navigation_conversation"
             app:destination="@id/navigation_conversation" />
+        <action
+            android:id="@+id/action_navigation_chats_to_navigation_create_group"
+            app:destination="@id/navigation_create_group" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_create_group"
+        android:name="com.freezer.chatapp.ui.main.chats.create_group.CreateGroupFragment"
+        android:label="@string/title_create_group"
+        tools:layout="@layout/fragment_create_group">
+        <action
+            android:id="@+id/action_navigation_create_group_to_navigation_conversation"
+            app:destination="@id/navigation_conversation" />
     </fragment>
 
     <fragment

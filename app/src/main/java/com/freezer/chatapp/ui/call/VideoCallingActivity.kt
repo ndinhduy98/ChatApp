@@ -1,6 +1,9 @@
 package com.freezer.chatapp.ui.call
 
 import android.Manifest
+import android.app.NotificationManager
+import android.content.Context
+import android.media.AudioManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.annotation.StringRes
@@ -20,8 +23,12 @@ import org.webrtc.MediaStream
 import org.webrtc.SessionDescription
 import permissions.dispatcher.*
 import com.freezer.chatapp.R
+import com.freezer.chatapp.data.model.DeliveryStatus
+import com.freezer.chatapp.data.model.TextMessage
 import com.freezer.chatapp.databinding.ActivityCallingVideoBinding
+import com.freezer.chatapp.fcm.FirebaseMessagingService
 import com.google.firebase.firestore.DocumentChange
+import com.google.firebase.firestore.ListenerRegistration
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -42,6 +49,9 @@ class VideoCallingActivity : AppCompatActivity(){
 
     // WebRTC
     private lateinit var videoRtcClient: VideoRTCClient
+
+    // Audio manager
+    private lateinit var audioManager: AudioManager
 
     // SDP Observer
     private val sdpOfferObserver = object : AppSdpObserver() {
@@ -76,10 +86,23 @@ class VideoCallingActivity : AppCompatActivity(){
         database = Firebase.firestore
         user = FirebaseAuth.getInstance().currentUser!!
 
+        // AudioManager initialization
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+        binding.imageButtonCallEnd.setOnClickListener {
+            Toast.makeText(this, "Call ended", Toast.LENGTH_SHORT).show()
+            finish()
+        }
+
+        binding.tgCallMic.setOnCheckedChangeListener { _, isChecked ->
+            audioManager.isMicrophoneMute = isChecked
+        }
+
         when(intent.extras?.getString("calling_mode")) {
             CallMode.CALL_MODE_OFFER -> {
                 // Retrieve target profile
                 val profile = intent.extras?.getParcelable<Profile>("profile")
+                val groupId = intent.extras?.getString("group_id")
 
                 // Send call data to database
                 callInfoRef = database.collection("calls_info").document()
@@ -92,6 +115,34 @@ class VideoCallingActivity : AppCompatActivity(){
                     callType = Call.Type.CALL_TYPE_VIDEO
                 )).addOnSuccessListener {
                     initializeCallWithPermissionCheck()
+                }
+
+                var listener: ListenerRegistration? = null
+                listener = callInfoRef.addSnapshotListener { snapshot, _ ->
+                    val data = snapshot?.toObject(Call::class.java)
+                    if (data != null) {
+                        if (data.status != "RINGING") {
+                            // Remove notification
+                            val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                            manager.cancel(FirebaseMessagingService.NOTIFICATION_ID)
+                            listener?.remove()
+                            finish()
+                        }
+                    }
+                }
+
+                // Save into message
+                groupId?.let {
+                    database.collection("message")
+                        .document(it)
+                        .collection("messages")
+                        .add(
+                            TextMessage(
+                            text = "Video call",
+                            sendBy = user.uid,
+                            deliveryStatus = DeliveryStatus.SENT
+                        )
+                        )
                 }
             }
             CallMode.CALL_MODE_ANSWER -> {
@@ -110,6 +161,7 @@ class VideoCallingActivity : AppCompatActivity(){
         super.onDestroy()
 
         videoRtcClient.end()
+        callInfoRef.update("status", Call.Status.CALL_STATUS_ENDED)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -239,7 +291,7 @@ class VideoCallingActivity : AppCompatActivity(){
 
     @OnNeverAskAgain(Manifest.permission.RECORD_AUDIO)
     fun onRecordAudioNeverAskAgain() {
-        Toast.makeText(this, "Please grant microphone permission", Toast.LENGTH_SHORT)
+        Toast.makeText(this, "Please grant microphone permission", Toast.LENGTH_SHORT).show()
         finish()
     }
 
@@ -255,7 +307,7 @@ class VideoCallingActivity : AppCompatActivity(){
 
     @OnNeverAskAgain(Manifest.permission.CAMERA)
     fun onCameraNeverAskAgain() {
-        Toast.makeText(this, "Please grant camera permission", Toast.LENGTH_SHORT)
+        Toast.makeText(this, "Please grant camera permission", Toast.LENGTH_SHORT).show()
         finish()
     }
 

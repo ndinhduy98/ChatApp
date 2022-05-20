@@ -85,7 +85,7 @@ class AudioCallingActivity : AppCompatActivity(){
 
         // Set speaker to front speaker
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+        audioManager.mode = AudioManager.MODE_IN_CALL
         audioManager.isSpeakerphoneOn = false
 
         binding.imageButtonCallEnd.setOnClickListener {
@@ -93,8 +93,18 @@ class AudioCallingActivity : AppCompatActivity(){
             finish()
         }
 
+        binding.tgCallMic.setOnCheckedChangeListener { _, isChecked ->
+            audioManager.isMicrophoneMute = isChecked
+        }
+
         binding.tgCallSpeaker.setOnCheckedChangeListener { _, isChecked ->
-            audioManager.isSpeakerphoneOn = isChecked
+            if(isChecked) {
+                audioManager.mode = AudioManager.MODE_NORMAL
+                audioManager.isSpeakerphoneOn = true
+            } else {
+                audioManager.mode = AudioManager.MODE_IN_CALL
+                audioManager.isSpeakerphoneOn = false
+            }
         }
 
         database = Firebase.firestore
@@ -334,7 +344,7 @@ class AudioCallingActivity : AppCompatActivity(){
 
     @OnNeverAskAgain(Manifest.permission.RECORD_AUDIO)
     fun onRecordAudioNeverAskAgain() {
-        Toast.makeText(this, "Please grant microphone permission", Toast.LENGTH_SHORT)
+        Toast.makeText(this, "Please grant microphone permission", Toast.LENGTH_SHORT).show()
         finish()
     }
 

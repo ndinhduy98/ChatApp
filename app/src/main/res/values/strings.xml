@@ -24,6 +24,7 @@
     <string name="title_chats">Chats</string>
     <string name="title_more">More</string>
     <string name="title_add_contact">Add Contact</string>
+    <string name="title_create_group">Create Group</string>
     <string name="title_pending_contacts">Pending Contacts</string>
     <string name="text_enter_phone_number">Enter Phone Number</string>
     <string name="text_enter_text">Enter text</string>
@@ -53,4 +54,6 @@
     <string name="permission_record_audio_rationale">Record audio permission is needed to perform audio call.</string>
     <string name="permission_record_audio_denied">Record audio permission was denied. Please consider granting it in order to access the microphone!</string>
     <string name="permission_record_audio_never_ask_again">Record audio permission was denied with never ask again.</string>
+    <string name="button_confirm">Confirm</string>
+    <string name="text_enter_group_name">Enter group name</string>
 </resources>

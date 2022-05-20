@@ -22,9 +22,6 @@ class ChatsFragment : BaseFragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var database : FirebaseFirestore
-    private lateinit var user : FirebaseUser
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -32,10 +29,9 @@ class ChatsFragment : BaseFragment() {
     ): View {
         _binding = FragmentChatsBinding.inflate(inflater, container, false)
 
-        _binding!!.imageButtonNewConversation.setOnClickListener {
-            NavHostFragment.findNavController(this).navigate(R.id.action_navigation_chats_to_navigation_conversation)
+        binding.imageButtonNewConversation.setOnClickListener {
+            NavHostFragment.findNavController(this).navigate(R.id.action_navigation_chats_to_navigation_create_group)
         }
-
         initializeChatsRecyclerView()
 
         return binding.root
