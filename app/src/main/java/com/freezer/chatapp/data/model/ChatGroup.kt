@@ -1,12 +1,13 @@
 package com.freezer.chatapp.data.model
 
 import android.os.Parcelable
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.ServerTimestamp
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.RawValue
-import org.w3c.dom.Document
 import java.util.Date
 import kotlin.collections.ArrayList
 
@@ -23,7 +24,8 @@ data class ChatGroup(
     var createdBy: String = "",
     var members: ArrayList<String>? = null,
     var name: String? = null,
-    var recentMessage: @RawValue Message? = null,
-    var type: String = "null",
+    @Exclude
+    var recentMessage: @RawValue MutableLiveData<Message?>? = MutableLiveData(),
+    var type: String = "",
     var profileRef : @RawValue DocumentReference? = null
-) : Parcelable
+) : Parcelable, ViewModel()

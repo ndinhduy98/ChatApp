@@ -2,6 +2,7 @@ package com.freezer.chatapp.ui.main
 
 import android.os.Build
 import android.os.Bundle
+import android.os.Message
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -19,7 +20,9 @@ import com.freezer.chatapp.utils.FirestoreUtils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
@@ -28,10 +31,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
-        Log.e("MainActivity", "${exception.printStackTrace()}")
-    }
-
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,7 +38,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val navHostFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainer) as NavHostFragment
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.fragmentContainer) as NavHostFragment
         val navController = navHostFragment.navController
 
         binding.bottomNavView.setupWithNavController(navController)
@@ -53,114 +53,99 @@ class MainActivity : AppCompatActivity() {
 
         if (user != null) {
             database.collection("profiles").document(user.uid).get()
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            myProfileViewModel.myProfile = task.result.toObject(Profile::class.java)!!
-                        }
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        myProfileViewModel.myProfile = task.result.toObject(Profile::class.java)!!
                     }
+                }
         }
 
         // Retrieve pending contacts
         val pendingContactsViewModel = ViewModelProvider(this)[PendingContactsViewModel::class.java]
+        val contactsViewModel = ViewModelProvider(this)[ContactsViewModel::class.java]
+        val chatGroupsViewModel = ViewModelProvider(this)[ChatGroupsViewModel::class.java]
 
         if (user != null) {
             database.collection("pending_requests")
                 .document(user.uid)
                 .collection("requests")
                 .addSnapshotListener { snapshot, _ ->
-                CoroutineScope(Dispatchers.IO).launch {
-//                    if (snapshot != null && snapshotData != null) {
-//                        if (snapshotData is HashMap<*, *>) {
-//                            val pendingContactSnapshot = snapshotData as HashMap<String, String>
-//                            val request = PendingContactRequest(
-//                                    from = pendingContactSnapshot.getValue("from"),
-//                                    to = pendingContactSnapshot.getValue("to"),
-//                                    status = pendingContactSnapshot.getValue("status"))
-//
-//                            if (request.status != PendingContactRequestStatus.PENDING) {
-//                                pendingContactsViewModel.pendingContacts.forEach {
-//                                    if (it.request.from == request.from) {
-//                                        pendingContactsViewModel.remove(it)
-//                                    }
-//                                }
-//                            } else {
-//                                CoroutineScope(Dispatchers.IO).launch {
-//                                    val profile = FirestoreUtils().getProfile(request.from)
-//                                    val pendingContact = PendingContact(profile, request)
-//                                    pendingContactsViewModel.add(pendingContact)
-//                                }
-//                            }
-//
-//                        } else {
-//                            val pendingContacts = FirestoreUtils().parsePendingContacts(snapshotData as ArrayList<HashMap<String, String>>)
-//                            pendingContactsViewModel.pendingContacts = pendingContacts
-//                        }
-//                    }
-
-                    val pendingContactRequests = snapshot?.toObjects(PendingContactRequest::class.java)
-                    pendingContactRequests?.forEach { pendingContactRequest ->
-                        val pendingContactProfile = FirestoreUtils().getProfile(pendingContactRequest.from)
-                        val pendingContact = PendingContact(pendingContactProfile, pendingContactRequest)
-                        pendingContactsViewModel.add(pendingContact)
-                    }
-                    snapshot?.documentChanges?.forEach { documentChange ->
-                        if(documentChange.type == DocumentChange.Type.MODIFIED) {
-                            val pendingContactRequest = documentChange.document.toObject(PendingContactRequest::class.java)
-                            if(pendingContactRequest.status != PendingContactRequest.Status.PENDING) {
-                                pendingContactsViewModel.remove(pendingContactRequest)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        snapshot?.documentChanges?.forEach { documentChange ->
+                            when (documentChange.type) {
+                                DocumentChange.Type.ADDED -> {
+                                    val pendingContactRequest =
+                                        documentChange.document.toObject(PendingContactRequest::class.java)
+                                    if (pendingContactRequest.status == PendingContactRequest.Status.PENDING) {
+                                        val pendingContactProfile =
+                                            FirestoreUtils().getProfile(pendingContactRequest.from)
+                                        val pendingContact = PendingContact(
+                                            pendingContactProfile,
+                                            pendingContactRequest
+                                        )
+                                        pendingContactsViewModel.add(pendingContact)
+                                    }
+                                }
+                                DocumentChange.Type.MODIFIED -> {
+                                    val pendingContactRequest =
+                                        documentChange.document.toObject(PendingContactRequest::class.java)
+                                    if (pendingContactRequest.status != PendingContactRequest.Status.PENDING) {
+                                        pendingContactsViewModel.remove(pendingContactRequest)
+                                    }
+                                }
+                                else -> {}
                             }
                         }
                     }
                 }
-            }
-        }
 
-        // Retrieve contacts
-        val contactsViewModel = ViewModelProvider(this)[ContactsViewModel::class.java]
+            // Retrieve contacts
 
-        if (user != null) {
             database.collection("contacts")
                 .document(user.uid)
+                .collection("contacts_list")
                 .addSnapshotListener { snapshot, _ ->
-                val snapshotData = snapshot?.data?.get("list")
-                if (snapshot != null && snapshotData != null) {
-                    if(snapshotData is DocumentReference) {
-                        CoroutineScope(Dispatchers.IO).launch(coroutineExceptionHandler) {
-                            val profile = snapshotData.get().await().toObject(Profile::class.java)
-                            profile?.let { contactsViewModel.add(profile) }
-                        }
-                    } else {
-                        try {
-                            CoroutineScope(Dispatchers.IO).launch(coroutineExceptionHandler) {
-                                for(documentRef in snapshotData as ArrayList<DocumentReference>) {
-                                        val profile = documentRef.get().await().toObject(Profile::class.java)
-                                        profile?.let { contactsViewModel.add(profile) }
+                    CoroutineScope(Dispatchers.IO).launch {
+                        snapshot?.documentChanges?.forEach { documentChange ->
+                            if (documentChange.type == DocumentChange.Type.ADDED) {
+                                val profileRef = documentChange.document.get("ref")
+                                if (profileRef is DocumentReference) {
+                                    val profile =
+                                        profileRef.get().await().toObject(Profile::class.java)
+                                    profile?.let { contactsViewModel.add(profile) }
                                 }
                             }
-                        } catch (e: ClassCastException) {
-                            Log.e("MainActivity", "${e.printStackTrace()}")
                         }
                     }
                 }
-            }
-        }
 
-        // Retrieve chat group
-        val chatGroupsViewModel = ViewModelProvider(this)[ChatGroupsViewModel::class.java]
-
-        if (user != null) {
+            // Retrieve chat group
             database.collection("groups")
                 .whereArrayContains("members", user.uid)
                 .addSnapshotListener { snapshot, _ ->
-                    if (snapshot != null) {
-                        for (doc in snapshot) {
-                            val chatGroup = doc.toObject(ChatGroup::class.java)
+                    snapshot?.documentChanges?.forEach { documentChange ->
+                        if(documentChange.type == DocumentChange.Type.ADDED) {
+                            val chatGroup = documentChange.document.toObject(ChatGroup::class.java)
+                            database.collection("message").document(chatGroup.id)
+                                .collection("messages")
+                                .orderBy("createdAt", Query.Direction.DESCENDING)
+                                .limit(1)
+                                .addSnapshotListener { snapshot, _ ->
+                                    snapshot?.documentChanges?.forEach { messageDocumentChange ->
+                                        if(messageDocumentChange.type == DocumentChange.Type.ADDED) {
+                                            if(messageDocumentChange.document.get("type") == MessageType.TEXT) {
+                                                chatGroup.recentMessage?.postValue(messageDocumentChange.document.toObject(TextMessage::class.java))
+                                            } else {
+                                                chatGroup.recentMessage?.postValue(messageDocumentChange.document.toObject(ImageMessage::class.java))
+                                            }
+                                        }
+                                    }
+                                }
                             chatGroupsViewModel.add(chatGroup)
                         }
                     }
                 }
         }
-
     }
 
     fun setBottomNavigationVisibility(visibility: Int) {

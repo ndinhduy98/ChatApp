@@ -12,16 +12,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.freezer.chatapp.data.model.Profile
-import com.freezer.chatapp.data.viewmodel.LoginViewModel
 import com.freezer.chatapp.databinding.ActivityYourProfileBinding
 import com.freezer.chatapp.ui.main.MainActivity
 import com.freezer.chatapp.utils.FCMUtils
 import com.freezer.chatapp.utils.getBitmap
 import com.freezer.chatapp.utils.reduceBitmapSize
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
@@ -35,7 +32,6 @@ import java.io.File
 import java.lang.Exception
 
 class YourProfileActivity : AppCompatActivity() {
-    private lateinit var loginViewModel: LoginViewModel
     private lateinit var binding: ActivityYourProfileBinding
     private lateinit var imageAvatarUri: Uri
 

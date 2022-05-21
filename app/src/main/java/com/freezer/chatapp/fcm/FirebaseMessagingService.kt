@@ -28,8 +28,6 @@ class FirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-
-        Log.d("FCM_TOKEN", token)
         FCMUtils().sendRegistrationToken(token)
     }
 
@@ -37,6 +35,7 @@ class FirebaseMessagingService : FirebaseMessagingService() {
         super.onMessageReceived(message)
 
         val data = message.data
+        // TODO: Check here
         if (data != null) {
             val callDataObj = Call(
                 uid = data["uid"]!!,

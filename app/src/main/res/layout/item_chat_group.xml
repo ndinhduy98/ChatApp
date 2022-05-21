@@ -55,6 +55,7 @@
             android:textSize="12sp"
             app:layout_constraintStart_toStartOf="@+id/textViewItemChatGroupName"
             app:layout_constraintTop_toBottomOf="@+id/textViewItemChatGroupName"
+            android:text="@{chatGroup.recentMessage.text}"
             tools:text="Good morning, did you sleep well?" />
 
         <TextView

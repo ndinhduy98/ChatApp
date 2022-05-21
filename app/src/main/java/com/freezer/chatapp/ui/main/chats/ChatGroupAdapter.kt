@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.freezer.chatapp.R
 import com.freezer.chatapp.data.model.ChatGroup
@@ -15,8 +16,12 @@ import com.freezer.chatapp.utils.BindableAdapter
 import com.freezer.chatapp.utils.GlideApp
 import com.google.firebase.storage.FirebaseStorage
 
-
-class ChatGroupAdapter(val context: Context, val contacts: ArrayList<Profile>, val listener: ChatGroupItemListener) : RecyclerView.Adapter<ChatGroupAdapter.ChatGroupHolder>(),
+class ChatGroupAdapter(
+    val context: Context,
+    val contacts: ArrayList<Profile>,
+    private val currentUserUid: String,
+    val listener: ChatGroupItemListener
+) : RecyclerView.Adapter<ChatGroupAdapter.ChatGroupHolder>(),
     BindableAdapter<List<ChatGroup>> {
     var chatGroups = emptyList<ChatGroup>()
     override fun setData(items: List<ChatGroup>) {
@@ -24,14 +29,26 @@ class ChatGroupAdapter(val context: Context, val contacts: ArrayList<Profile>, v
         notifyDataSetChanged()
     }
 
-    class ChatGroupHolder(val context: Context, val contacts: ArrayList<Profile>, private val listener: ChatGroupItemListener, itemView: View): RecyclerView.ViewHolder(itemView) {
+    class ChatGroupHolder(
+        val context: Context,
+        val contacts: ArrayList<Profile>,
+        private val currentUserUid: String,
+        private val listener: ChatGroupItemListener,
+        itemView: View
+    ) : RecyclerView.ViewHolder(itemView) {
         fun bind(chatGroup: ChatGroup) {
             val tvName = itemView.findViewById<TextView>(R.id.textViewItemChatGroupName)
             val ivAvatar = itemView.findViewById<ImageView>(R.id.imageViewChatItemContactAvatar)
+            val tvText = itemView.findViewById<TextView>(R.id.textViewItemContactLastMessage)
 
-            if(chatGroup.type == ChatGroupType.PRIVATE_CHAT) {
-                val targetProfile = contacts.find { profile ->
-                    profile.uid != chatGroup.createdBy
+            if (chatGroup.type == ChatGroupType.PRIVATE_CHAT) {
+                // Remove current user uid
+                val targetProfileUid = chatGroup.members?.find {
+                    it != currentUserUid
+                }
+
+                val targetProfile = contacts.find {
+                    it.uid == targetProfileUid
                 }
 
                 val avatarRef = targetProfile?.let {
@@ -48,6 +65,10 @@ class ChatGroupAdapter(val context: Context, val contacts: ArrayList<Profile>, v
                 tvName.text = chatGroup.name
             }
 
+            chatGroup.recentMessage?.observe(context as AppCompatActivity) {
+                tvText.text = it?.text
+            }
+
             itemView.setOnClickListener {
                 listener.onClick(chatGroup, chatGroup.name!!)
             }
@@ -56,7 +77,13 @@ class ChatGroupAdapter(val context: Context, val contacts: ArrayList<Profile>, v
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatGroupHolder {
         val inflater = LayoutInflater.from(parent.context)
-        return ChatGroupHolder(context, contacts, listener, inflater.inflate(R.layout.item_chat_group, parent, false))
+        return ChatGroupHolder(
+            context,
+            contacts,
+            currentUserUid,
+            listener,
+            inflater.inflate(R.layout.item_chat_group, parent, false)
+        )
     }
 
     override fun onBindViewHolder(holder: ChatGroupHolder, position: Int) {
