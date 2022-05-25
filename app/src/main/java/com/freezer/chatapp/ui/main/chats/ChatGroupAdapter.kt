@@ -39,7 +39,8 @@ class ChatGroupAdapter(
         fun bind(chatGroup: ChatGroup) {
             val tvName = itemView.findViewById<TextView>(R.id.textViewItemChatGroupName)
             val ivAvatar = itemView.findViewById<ImageView>(R.id.imageViewChatItemContactAvatar)
-            val tvText = itemView.findViewById<TextView>(R.id.textViewItemContactLastMessage)
+            val tvText = itemView.findViewById<TextView>(R.id.textViewItemChatLastMessageText)
+            val tvTime = itemView.findViewById<TextView>(R.id.textViewItemChatLastMessageTime)
 
             if (chatGroup.type == ChatGroupType.PRIVATE_CHAT) {
                 // Remove current user uid

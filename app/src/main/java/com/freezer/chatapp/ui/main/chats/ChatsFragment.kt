@@ -4,7 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.ViewModelProvider
+import androidx.core.os.bundleOf
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import com.freezer.chatapp.R
 import com.freezer.chatapp.data.model.ChatGroup
@@ -14,7 +15,6 @@ import com.freezer.chatapp.databinding.FragmentChatsBinding
 import com.freezer.chatapp.ui.BaseFragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.firestore.FirebaseFirestore
 
 class ChatsFragment : BaseFragment() {
 
@@ -24,7 +24,8 @@ class ChatsFragment : BaseFragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var contactsViewModel: ContactsViewModel
+    private val chatGroupsViewModel: ChatGroupsViewModel by activityViewModels()
+    private val contactsViewModel: ContactsViewModel by activityViewModels()
 
     private lateinit var user: FirebaseUser
 
@@ -35,14 +36,13 @@ class ChatsFragment : BaseFragment() {
     ): View {
         _binding = FragmentChatsBinding.inflate(inflater, container, false)
 
-        user = FirebaseAuth.getInstance().currentUser!!
-
-        contactsViewModel = ViewModelProvider(requireActivity())[ContactsViewModel::class.java]
 
         binding.imageButtonNewConversation.setOnClickListener {
             NavHostFragment.findNavController(this)
                 .navigate(R.id.action_navigation_chats_to_navigation_create_group)
         }
+        user = FirebaseAuth.getInstance().currentUser!!
+
         initializeChatsRecyclerView()
 
         return binding.root
@@ -54,16 +54,13 @@ class ChatsFragment : BaseFragment() {
     }
 
     private fun initializeChatsRecyclerView() {
-        binding.chatGroupsViewModel =
-            ViewModelProvider(requireActivity())[ChatGroupsViewModel::class.java]
+        binding.chatGroupsViewModel = chatGroupsViewModel
 
         binding.recyclerViewChatGroups.adapter = context?.let {
             ChatGroupAdapter(it, contactsViewModel.contactProfiles, user.uid,
                 object : ChatGroupItemListener {
                     override fun onClick(chatGroup: ChatGroup, chatGroupName: String) {
-                        val bundle = Bundle()
-                        bundle.putParcelable("chat_group", chatGroup)
-                        bundle.putString("chat_group_name", chatGroupName)
+                        val bundle = bundleOf("chat_group" to chatGroup, "chat_group_name" to chatGroupName)
                         NavHostFragment.findNavController(this@ChatsFragment)
                             .navigate(R.id.navigation_conversation, bundle)
                     }

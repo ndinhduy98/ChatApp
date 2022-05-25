@@ -11,7 +11,7 @@
         
         <variable
             name="viewModel"
-            type="com.freezer.chatapp.data.viewmodel.ProfilesViewModel" />
+            type="com.freezer.chatapp.data.viewmodel.AddContactViewModel" />
     </data>
     
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -59,7 +59,7 @@
             android:layout_height="0dp"
             android:layout_marginTop="16dp"
             android:overScrollMode="never"
-            app:recyclerViewData="@{viewModel.profiles}"
+            app:recyclerViewData="@{viewModel.addContactProfiles}"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/searchViewAddContactPhoneNumber"

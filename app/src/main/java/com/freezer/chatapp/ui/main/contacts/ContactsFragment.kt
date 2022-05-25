@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.NavHostFragment
 import com.freezer.chatapp.R
@@ -20,6 +22,8 @@ class ContactsFragment : BaseFragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
+
+    private val pendingContactsViewModel: PendingContactsViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,8 +47,7 @@ class ContactsFragment : BaseFragment() {
 
         _binding!!.recyclerViewContacts.adapter = context?.let { ContactAdapter(it, object : ContactItemListener {
             override fun onClick(profile: Profile) {
-                val bundle = Bundle()
-                bundle.putParcelable("profile", profile)
+                val bundle = bundleOf("profile" to profile)
                 NavHostFragment.findNavController(this@ContactsFragment)
                     .navigate(R.id.navigation_conversation, bundle)
             }
@@ -55,7 +58,6 @@ class ContactsFragment : BaseFragment() {
         }) }
 
         // Pending Contacts View Model
-        val pendingContactsViewModel = ViewModelProvider(requireActivity())[PendingContactsViewModel::class.java]
         _binding!!.pendingContactsViewModel = pendingContactsViewModel
 
         return root

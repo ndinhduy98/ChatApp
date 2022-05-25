@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
 import com.freezer.chatapp.data.viewmodel.MyProfileViewModel
 import com.freezer.chatapp.databinding.FragmentMoreBinding
 import com.freezer.chatapp.ui.BaseFragment
@@ -17,17 +17,16 @@ class MoreFragment : BaseFragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: MyProfileViewModel
+    private val myProfileViewModel: MyProfileViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        viewModel = ViewModelProvider(requireActivity())[MyProfileViewModel::class.java]
 
         _binding = FragmentMoreBinding.inflate(inflater, container, false)
-        _binding!!.viewModel = viewModel
+        binding.viewModel = myProfileViewModel
         return binding.root
     }
 

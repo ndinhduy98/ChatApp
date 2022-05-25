@@ -97,6 +97,7 @@
             android:background="@color/dim_gray"
             android:hint="@string/text_enter_text"
             android:paddingVertical="4dp"
+            android:text="@{conversationViewModel.conversationContent}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/imageButtonConversationSend"
             app:layout_constraintStart_toEndOf="@+id/imageButtonConversationMoreAction" />

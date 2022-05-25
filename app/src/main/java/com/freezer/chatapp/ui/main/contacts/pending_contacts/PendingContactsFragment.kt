@@ -1,31 +1,28 @@
 package com.freezer.chatapp.ui.main.contacts.pending_contacts
 
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.ViewModelProvider
+import androidx.annotation.RequiresApi
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.freezer.chatapp.data.model.PendingContact
 import com.freezer.chatapp.data.model.PendingContactRequest
 import com.freezer.chatapp.data.viewmodel.PendingContactsViewModel
 import com.freezer.chatapp.databinding.FragmentsPendingContactsBinding
 import com.freezer.chatapp.ui.BaseFragment
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
+@RequiresApi(Build.VERSION_CODES.N)
 class PendingContactsFragment : BaseFragment() {
     private var _binding: FragmentsPendingContactsBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
+
+    private val pendingContactsViewModel: PendingContactsViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,25 +32,26 @@ class PendingContactsFragment : BaseFragment() {
         _binding = FragmentsPendingContactsBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val pendingContactsViewModel = ViewModelProvider(requireActivity())[PendingContactsViewModel::class.java]
-        _binding!!.viewModel = pendingContactsViewModel
+        binding.viewModel = pendingContactsViewModel
 
-        _binding!!.recyclerViewPendingContacts.adapter = context?.let { PendingContactAdapter(it, object : PendingContactItemListener {
-            override fun onApprove(pendingContact: PendingContact) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    setPendingContactRequest(pendingContact, PendingContactRequest.Status.APPROVED)
+        binding.recyclerViewPendingContacts.adapter = context?.let {
+            PendingContactAdapter(it, object : PendingContactItemListener {
+                override fun onApprove(pendingContact: PendingContact) {
+                    pendingContactsViewModel.setPendingContactRequest(
+                        pendingContact,
+                        PendingContactRequest.Status.APPROVED
+                    )
                 }
-                // Save to contacts in Firestore
-//                addToContacts(pendingContact)
-            }
 
-            override fun onReject(pendingContact: PendingContact) {
-                CoroutineScope(Dispatchers.IO).launch {
-                    setPendingContactRequest(pendingContact, PendingContactRequest.Status.REJECTED)
+                override fun onReject(pendingContact: PendingContact) {
+                    pendingContactsViewModel.setPendingContactRequest(
+                        pendingContact,
+                        PendingContactRequest.Status.REJECTED
+                    )
                 }
-            }
 
-        }) }
+            })
+        }
         _binding!!.recyclerViewPendingContacts.layoutManager = LinearLayoutManager(activity)
 
         return root
@@ -62,36 +60,5 @@ class PendingContactsFragment : BaseFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    private suspend fun setPendingContactRequest(pendingContact: PendingContact, status: String) {
-        val user = FirebaseAuth.getInstance().currentUser
-        val database = Firebase.firestore
-        if (user != null) {
-            val queryResults = database.collection("pending_requests")
-                .document(user.uid)
-                .collection("requests")
-                .whereEqualTo("from", pendingContact.request.from)
-                .whereEqualTo("to", pendingContact.request.to)
-                .get().await()
-
-            queryResults.forEach { pendingContactRequest ->
-                database.collection("pending_requests")
-                    .document(user.uid)
-                    .collection("requests")
-                    .document(pendingContactRequest.id)
-                    .update("status", status)
-            }
-        }
-    }
-
-    private fun addToContacts(pendingContact: PendingContact) {
-        val user = FirebaseAuth.getInstance().currentUser
-        val database = Firebase.firestore
-        if(user != null) {
-            database.collection("contacts")
-                .document(user.uid).update("list",
-                    FieldValue.arrayUnion(database.collection("profiles").document(pendingContact.profile!!.uid)))
-        }
     }
 }
