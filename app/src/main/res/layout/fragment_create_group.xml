@@ -6,8 +6,12 @@
 
     <data>
         <variable
-            name="viewModel"
+            name="contactsViewModel"
             type="com.freezer.chatapp.data.viewmodel.ContactsViewModel" />
+
+        <variable
+            name="createGroupViewModel"
+            type="com.freezer.chatapp.data.viewmodel.CreateGroupViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -52,7 +56,7 @@
             android:layout_height="0dp"
             android:layout_marginTop="16dp"
             android:overScrollMode="never"
-            app:recyclerViewData="@{viewModel.contactProfiles}"
+            app:recyclerViewData="@{contactsViewModel.contactProfiles}"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:layout_constraintBottom_toBottomOf="@id/buttonCreateGroupConfirm"
             app:layout_constraintTop_toBottomOf="@+id/editTextCreateGroupName"

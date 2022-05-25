@@ -4,14 +4,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.ViewModelProvider
+import androidx.core.os.bundleOf
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.NavHostFragment
 import com.freezer.chatapp.R
-import com.freezer.chatapp.data.model.Profile
 import com.freezer.chatapp.data.viewmodel.ContactsViewModel
+import com.freezer.chatapp.data.viewmodel.CreateGroupViewModel
 import com.freezer.chatapp.databinding.FragmentCreateGroupBinding
 import com.freezer.chatapp.ui.BaseFragment
-import com.google.firebase.auth.FirebaseAuth
+import com.freezer.chatapp.ui.main.afterTextChanged
 
 class CreateGroupFragment: BaseFragment() {
     private var _binding: FragmentCreateGroupBinding? = null
@@ -22,7 +24,9 @@ class CreateGroupFragment: BaseFragment() {
     // onDestroyView.
     private val binding get() = _binding!!
 
-    private val chatGroupMembers = arrayListOf<String>()
+    private val contactsViewModel: ContactsViewModel by activityViewModels()
+
+    private val createGroupViewModel: CreateGroupViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,25 +36,28 @@ class CreateGroupFragment: BaseFragment() {
         _binding = FragmentCreateGroupBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        binding.viewModel = ViewModelProvider(requireActivity())[ContactsViewModel::class.java]
+        binding.contactsViewModel = contactsViewModel
 
         binding.recyclerViewCreateGroup.adapter = context?.let {
             ChatGroupMembersAdapter(it, object :
                 MembersListener {
                 override fun onCheckBoxClick(uid: String, isChecked: Boolean) {
                     if(isChecked) {
-                        chatGroupMembers.add(uid)
+                        createGroupViewModel.addMember(uid)
                     } else {
-                        chatGroupMembers.remove(uid)
+                        createGroupViewModel.removeMember(uid)
                     }
                 }
             })
         }
 
+        binding.editTextCreateGroupName.afterTextChanged {
+            createGroupViewModel.chatGroupName.postValue(it)
+        }
+
         binding.buttonCreateGroupConfirm.setOnClickListener {
-            val bundle = Bundle()
-            bundle.putStringArrayList("chat_group_members", chatGroupMembers)
-            bundle.putString("chat_group_name", binding.editTextCreateGroupName.text.toString())
+            val bundle = bundleOf("chat_group_members" to createGroupViewModel.chatGroupMembers,
+                "chat_group_name" to createGroupViewModel.chatGroupName.value)
             NavHostFragment.findNavController(this@CreateGroupFragment)
                 .navigate(R.id.navigation_conversation, bundle)
         }

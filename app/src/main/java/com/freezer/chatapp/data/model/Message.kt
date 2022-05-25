@@ -1,7 +1,9 @@
 package com.freezer.chatapp.data.model
 
+import android.os.Parcelable
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.ServerTimestamp
+import kotlinx.parcelize.Parcelize
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -29,17 +31,19 @@ interface Message {
     }
 }
 
+@Parcelize
 class TextMessage(override var text: String = "",
                   override var sendBy: String = "",
                   @ServerTimestamp
                   override var createdAt: Date? = null,
                   override var deliveryStatus: String? = null,
-                  override val type: String = MessageType.TEXT) : Message {}
+                  override val type: String = MessageType.TEXT) : Message, Parcelable {}
 
+@Parcelize
 class ImageMessage(var imagePath: String = "",
-                        override var text: String = "",
-                        override var sendBy: String = "",
-                        @ServerTimestamp
-                        override var createdAt: Date? = null,
-                        override var deliveryStatus: String?,
-                        override val type: String = MessageType.IMAGE) : Message {}
+                    override var text: String = "",
+                    override var sendBy: String = "",
+                    @ServerTimestamp
+                    override var createdAt: Date? = null,
+                    override var deliveryStatus: String? = null,
+                    override val type: String = MessageType.IMAGE) : Message, Parcelable {}

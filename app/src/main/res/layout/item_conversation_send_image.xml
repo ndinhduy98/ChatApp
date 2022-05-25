@@ -6,6 +6,10 @@
         <variable
             name="message"
             type="com.freezer.chatapp.data.model.Message" />
+        <variable
+            name="binding"
+            type="com.freezer.chatapp.utils.BindingAdapters" />
+        <import type="com.freezer.chatapp.data.model.ImageMessage"/>
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -21,17 +25,15 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                android:id="@+id/textViewText"
+            <ImageView
+                android:id="@+id/imageViewPhoto"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxWidth="250dp"
                 android:padding="16dp"
-                android:text="@{message.text}"
-                android:textColor="@android:color/white"
+                app:messageImageUrl="@{((ImageMessage)message).imagePath}"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:text="Send Message" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/textViewDate"
@@ -39,17 +41,17 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="4dp"
                 android:textSize="12sp"
-                app:layout_constraintBottom_toBottomOf="@+id/textViewText"
+                app:layout_constraintBottom_toBottomOf="@+id/imageViewPhoto"
                 app:layout_constraintEnd_toStartOf="@+id/textViewDivider"
                 tools:text="16:50"
-                android:text="@{message.createdAt.toString()}"/>
+                android:text="@{message.getFormattedCreatedAt()}"/>
 
             <TextView
                 android:id="@+id/textViewDivider"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="·"
-                app:layout_constraintBottom_toBottomOf="@+id/textViewText"
+                app:layout_constraintBottom_toBottomOf="@+id/imageViewPhoto"
                 app:layout_constraintEnd_toStartOf="@+id/textViewDeliveryReceipt"/>
 
             <TextView
@@ -61,7 +63,8 @@
                 android:textSize="12sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                tools:text="Read" />
+                tools:text="Read"
+                android:visibility="gone"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

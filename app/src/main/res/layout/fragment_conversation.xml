@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+        <import type="android.view.View"/>
         <variable
             name="binding"
             type="com.freezer.chatapp.utils.BindingAdapters" />
@@ -78,10 +79,10 @@
             tools:listitem="@layout/item_conversation_receive_text" />
 
         <ImageButton
-            android:id="@+id/imageButtonConversationMoreAction"
+            android:id="@+id/imageButtonConversationSendImage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_add"
+            android:src="@drawable/ic_photo"
             android:background="@null"
             android:padding="@dimen/image_button_padding"
             app:layout_constraintBottom_toBottomOf="@+id/editTextConversationContent"
@@ -100,7 +101,7 @@
             android:text="@{conversationViewModel.conversationContent}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/imageButtonConversationSend"
-            app:layout_constraintStart_toEndOf="@+id/imageButtonConversationMoreAction" />
+            app:layout_constraintStart_toEndOf="@+id/imageButtonConversationSendImage" />
 
         <ImageButton
             android:id="@+id/imageButtonConversationSend"
@@ -109,9 +110,9 @@
             android:src="@drawable/ic_send"
             android:background="@null"
             android:padding="@dimen/image_button_padding"
+            android:visibility="@{conversationViewModel.isConversationContentEmpty ? View.GONE : View.VISIBLE}"
             app:layout_constraintBottom_toBottomOf="@id/editTextConversationContent"
             app:layout_constraintTop_toTopOf="@id/editTextConversationContent"
             app:layout_constraintEnd_toEndOf="parent" />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

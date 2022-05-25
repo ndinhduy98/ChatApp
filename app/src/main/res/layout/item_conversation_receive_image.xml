@@ -31,11 +31,9 @@
                 android:layout_height="wrap_content"
                 android:maxWidth="250dp"
                 android:padding="16dp"
-                app:imageUrl="@{((ImageMessage)message).imagePath}"
-                android:textAlignment="textStart"
+                app:messageImageUrl="@{((ImageMessage)message).imagePath}"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:text="Send Message" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/textViewDate"

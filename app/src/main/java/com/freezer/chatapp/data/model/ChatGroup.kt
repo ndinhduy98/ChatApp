@@ -25,6 +25,8 @@ data class ChatGroup(
     var members: ArrayList<String>? = null,
     var name: String? = null,
     @Exclude
+    val nameLiveData: @RawValue MutableLiveData<String> = MutableLiveData(),
+    @Exclude
     var recentMessage: @RawValue MutableLiveData<Message?>? = MutableLiveData(),
     var type: String = "",
     var profileRef : @RawValue DocumentReference? = null

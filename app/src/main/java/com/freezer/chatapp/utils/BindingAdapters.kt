@@ -31,5 +31,21 @@ class BindingAdapters {
                 .circleCrop()
                 .into(imageView)
         }
+
+        @BindingAdapter("messageImageUrl")
+        @JvmStatic
+        fun setImageMessageFromFireStore(imageView: ImageView, url: String) {
+            if(url.isEmpty())
+                return
+
+            val avatarRef = FirebaseStorage.getInstance("gs://chatapp-68a8d.appspot.com")
+                .reference.child(url)
+
+            GlideApp.with(imageView.context)
+                .load(avatarRef)
+                .placeholder(R.drawable.ic_photo)
+                .fitCenter()
+                .into(imageView)
+        }
     }
 }

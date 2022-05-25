@@ -87,7 +87,7 @@ class YourProfileActivity : AppCompatActivity() {
             .reference
 
         if (user != null && user.phoneNumber != null) {
-            var uploadTask: UploadTask.TaskSnapshot? = null
+            var uploadTask: UploadTask.TaskSnapshot?
 
             // Check if Avatar is set
                 if(this::imageAvatarUri.isInitialized) {

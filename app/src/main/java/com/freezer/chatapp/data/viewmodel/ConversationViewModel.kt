@@ -2,6 +2,9 @@ package com.freezer.chatapp.data.viewmodel
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.Image
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.lifecycle.MutableLiveData
@@ -14,9 +17,13 @@ import com.freezer.chatapp.ui.main.chats.conversation.ImageReceiveMessageAdapter
 import com.freezer.chatapp.ui.main.chats.conversation.ImageSendMessageAdapter
 import com.freezer.chatapp.ui.main.chats.conversation.TextReceiveMessageAdapter
 import com.freezer.chatapp.ui.main.chats.conversation.TextSendMessageAdapter
+import com.freezer.chatapp.utils.reduceBitmapSize
 import com.freezer.chatapp.webrtc.CallMode
+import com.github.file_picker.model.Media
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.UploadTask
 import com.xwray.groupie.GroupieAdapter
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -24,17 +31,22 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.io.ByteArrayOutputStream
+import java.io.FileInputStream
 import javax.inject.Named
 
 class ConversationViewModel @AssistedInject constructor(
     @Named("user") private val user: FirebaseUser?,
     @Named("database") private val database: FirebaseFirestore,
+    @Named("storage") private val storage: StorageReference,
     @Assisted private val arguments: Bundle,
     @Assisted private val groupieAdapter: GroupieAdapter
 ) : ViewModel() {
     val conversationName = MutableLiveData<String>()
-    var groupId = ""
+    var chatGroupId = ""
     val conversationContent = MutableLiveData<String>()
+
+    val isConversationContentEmpty = MutableLiveData(true)
 
     private var profile: Profile? = null
     private var chatGroup: ChatGroup? = null
@@ -69,9 +81,9 @@ class ConversationViewModel @AssistedInject constructor(
                         type = ChatGroupType.PRIVATE_CHAT
                     )
                     newChatGroupRef.set(newChatGroup)
-                    groupId = newChatGroupRef.id
+                    chatGroupId = newChatGroupRef.id
                 } else {
-                    groupId = chatGroups[index].id
+                    chatGroupId = chatGroups[index].id
                 }
                 chatGroupName = "${profile!!.firstName} ${profile!!.lastName}"
             }
@@ -90,12 +102,12 @@ class ConversationViewModel @AssistedInject constructor(
                         name = chatGroupName
                     )
                     newChatGroupRef.set(newChatGroup)
-                    groupId = newChatGroupRef.id
+                    chatGroupId = newChatGroupRef.id
                 }
             }
 
             if (chatGroup != null) {
-                groupId = chatGroup!!.id
+                chatGroupId = chatGroup!!.id
             }
             conversationName.postValue(chatGroupName!!)
             initializeConversationRecyclerView()
@@ -106,7 +118,7 @@ class ConversationViewModel @AssistedInject constructor(
         var isFirstInit = true
         if (user != null)
             database.collection("message")
-                .document(groupId)
+                .document(chatGroupId)
                 .collection("messages")
                 .addSnapshotListener { value, _ ->
                     if (isFirstInit) {
@@ -163,7 +175,7 @@ class ConversationViewModel @AssistedInject constructor(
         callingBundle.putString("calling_mode", CallMode.CALL_MODE_OFFER)
         val intent = Intent(context, VideoCallingActivity::class.java)
         intent.putExtras(callingBundle)
-        intent.putExtra("group_id", groupId)
+        intent.putExtra("group_id", chatGroupId)
         context.startActivity(intent)
     }
 
@@ -173,7 +185,7 @@ class ConversationViewModel @AssistedInject constructor(
         callingBundle.putString("calling_mode", CallMode.CALL_MODE_OFFER)
         val intent = Intent(context, AudioCallingActivity::class.java)
         intent.putExtras(callingBundle)
-        intent.putExtra("group_id", groupId)
+        intent.putExtra("group_id", chatGroupId)
         context.startActivity(intent)
     }
 
@@ -182,7 +194,7 @@ class ConversationViewModel @AssistedInject constructor(
             return
         if(user != null) {
             database.collection("message")
-                .document(groupId)
+                .document(chatGroupId)
                 .collection("messages")
                 .document()
                 .set(
@@ -192,6 +204,38 @@ class ConversationViewModel @AssistedInject constructor(
                         deliveryStatus = DeliveryStatus.SENT
                     )
                 )
+        }
+    }
+
+    fun sendImageMessage(files: List<Media>) {
+        if(user != null) {
+            val imageMessageRef = database.collection("message")
+                .document(chatGroupId)
+                .collection("messages")
+                .document()
+            imageMessageRef.set(
+                ImageMessage(
+                    text = "",
+                    sendBy = user.uid,
+                    deliveryStatus = DeliveryStatus.SENT,
+                    imagePath = "message_data/${chatGroupId}/${imageMessageRef.id}/1.jpg"
+                )
+            )
+
+            files.forEach {
+                val file = it.file
+                val fis = FileInputStream(file)
+                val resizedImageAvatar = BitmapFactory.decodeFile(file.path).reduceBitmapSize()
+                val resizedImageAvatarOutputStream = ByteArrayOutputStream()
+                resizedImageAvatar?.compress(Bitmap.CompressFormat.JPEG, 100, resizedImageAvatarOutputStream)
+                val imageAvatarByteArray = resizedImageAvatarOutputStream.toByteArray()
+
+                val imageRef = storage.child("message_data")
+                    .child(chatGroupId).child(imageMessageRef.id)
+                    .child("1.jpg")
+                    .putBytes(imageAvatarByteArray)
+            }
+
         }
     }
 
