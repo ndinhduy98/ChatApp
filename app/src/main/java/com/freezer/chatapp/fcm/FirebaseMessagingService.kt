@@ -34,8 +34,7 @@ class FirebaseMessagingService : FirebaseMessagingService() {
         super.onMessageReceived(message)
 
         val data = message.data
-        // TODO: Check here
-        if (data != null) {
+        if (data.isNotEmpty()) {
             val callDataObj = Call(
                 uid = data["uid"]!!,
                 from = data["fromUid"]!!,
