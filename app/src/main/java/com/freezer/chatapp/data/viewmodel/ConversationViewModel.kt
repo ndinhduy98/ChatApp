@@ -4,15 +4,14 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.Image
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.freezer.chatapp.data.model.*
-import com.freezer.chatapp.ui.call.AudioCallingActivity
-import com.freezer.chatapp.ui.call.VideoCallingActivity
+import com.freezer.chatapp.ui.call.AudioCallActivity
+import com.freezer.chatapp.ui.call.VideoCallActivity
 import com.freezer.chatapp.ui.main.chats.conversation.ImageReceiveMessageAdapter
 import com.freezer.chatapp.ui.main.chats.conversation.ImageSendMessageAdapter
 import com.freezer.chatapp.ui.main.chats.conversation.TextReceiveMessageAdapter
@@ -23,7 +22,6 @@ import com.github.file_picker.model.Media
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.StorageReference
-import com.google.firebase.storage.UploadTask
 import com.xwray.groupie.GroupieAdapter
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -173,7 +171,7 @@ class ConversationViewModel @AssistedInject constructor(
         val callingBundle = Bundle()
         profile?.let { callingBundle.putParcelable("profile", it) }
         callingBundle.putString("calling_mode", CallMode.CALL_MODE_OFFER)
-        val intent = Intent(context, VideoCallingActivity::class.java)
+        val intent = Intent(context, VideoCallActivity::class.java)
         intent.putExtras(callingBundle)
         intent.putExtra("group_id", chatGroupId)
         context.startActivity(intent)
@@ -183,7 +181,7 @@ class ConversationViewModel @AssistedInject constructor(
         val callingBundle = Bundle()
         profile?.let { callingBundle.putParcelable("profile", it) }
         callingBundle.putString("calling_mode", CallMode.CALL_MODE_OFFER)
-        val intent = Intent(context, AudioCallingActivity::class.java)
+        val intent = Intent(context, AudioCallActivity::class.java)
         intent.putExtras(callingBundle)
         intent.putExtra("group_id", chatGroupId)
         context.startActivity(intent)

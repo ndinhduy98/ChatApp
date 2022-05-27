@@ -45,14 +45,14 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".ui.call.VideoCallingActivity"
+            android:name=".ui.call.VideoCallActivity"
             android:exported="true"
             android:taskAffinity=""
             android:excludeFromRecents="true"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".ui.call.AudioCallingActivity"
+            android:name=".ui.call.AudioCallActivity"
             android:exported="true"
             android:taskAffinity=""
             android:excludeFromRecents="true"

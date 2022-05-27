@@ -1,48 +1,36 @@
-package com.freezer.chatapp.ui.call
+package com.freezer.chatapp.data.viewmodel
 
-import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioManager
 import android.os.Bundle
-import android.widget.Toast
-import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.freezer.chatapp.data.model.Call
+import com.freezer.chatapp.data.model.DeliveryStatus
 import com.freezer.chatapp.data.model.Profile
+import com.freezer.chatapp.data.model.TextMessage
+import com.freezer.chatapp.fcm.FirebaseMessagingService
 import com.freezer.chatapp.webrtc.*
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import org.webrtc.IceCandidate
-import org.webrtc.MediaStream
-import org.webrtc.SessionDescription
-import permissions.dispatcher.*
-import com.freezer.chatapp.R
-import com.freezer.chatapp.data.model.DeliveryStatus
-import com.freezer.chatapp.data.model.TextMessage
-import com.freezer.chatapp.databinding.ActivityCallingVideoBinding
-import com.freezer.chatapp.fcm.FirebaseMessagingService
-import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.ListenerRegistration
-import java.util.*
-import kotlin.collections.HashMap
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ActivityContext
+import org.webrtc.*
+import javax.inject.Named
 
-
-@RuntimePermissions
-class VideoCallingActivity : AppCompatActivity(){
-    private lateinit var binding : ActivityCallingVideoBinding
-
-    private lateinit var database: FirebaseFirestore
-    private lateinit var user: FirebaseUser
-
-    // Timeout timer
-    private lateinit var timer: Timer
-
+class VideoCallViewModel @AssistedInject constructor(
+    @Named("user") private val user: FirebaseUser?,
+    @Named("database") private val database: FirebaseFirestore,
+    @ActivityContext private val context: Context,
+    @Assisted private val extras: Bundle
+) : ViewModel() {
     // Firestore Ref
     private lateinit var callRef: DocumentReference
     private lateinit var callInfoRef: DocumentReference
@@ -52,6 +40,9 @@ class VideoCallingActivity : AppCompatActivity(){
 
     // Audio manager
     private lateinit var audioManager: AudioManager
+
+    // Call status
+    val callStatus = MutableLiveData<String>()
 
     // SDP Observer
     private val sdpOfferObserver = object : AppSdpObserver() {
@@ -76,45 +67,29 @@ class VideoCallingActivity : AppCompatActivity(){
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        binding = ActivityCallingVideoBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-
-        database = Firebase.firestore
-        user = FirebaseAuth.getInstance().currentUser!!
-
+    fun initialize(surfaceViewLocalRTC: SurfaceViewRenderer, surfaceViewRemoteRTC: SurfaceViewRenderer) {
         // AudioManager initialization
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-        binding.imageButtonCallEnd.setOnClickListener {
-            Toast.makeText(this, "Call ended", Toast.LENGTH_SHORT).show()
-            finish()
-        }
-
-        binding.tgCallMic.setOnCheckedChangeListener { _, isChecked ->
-            audioManager.isMicrophoneMute = isChecked
-        }
-
-        when(intent.extras?.getString("calling_mode")) {
+        when(extras.getString("calling_mode")) {
             CallMode.CALL_MODE_OFFER -> {
                 // Retrieve target profile
-                val profile = intent.extras?.getParcelable<Profile>("profile")
-                val groupId = intent.extras?.getString("group_id")
+                val profile = extras.getParcelable<Profile>("profile")
+                val groupId = extras.getString("group_id")
 
                 // Send call data to database
                 callInfoRef = database.collection("calls_info").document()
                 callRef = database.collection("calls").document(callInfoRef.id)
 
-                callInfoRef.set(Call(
+                callInfoRef.set(
+                    Call(
                     uid = callRef.id,
-                    from = user.uid,
+                    from = user!!.uid,
                     to = profile!!.uid,
                     callType = Call.Type.CALL_TYPE_VIDEO
-                )).addOnSuccessListener {
-                    initializeCallWithPermissionCheck()
+                )
+                ).addOnSuccessListener {
+                    initializeCall(surfaceViewLocalRTC, surfaceViewRemoteRTC)
                 }
 
                 var listener: ListenerRegistration? = null
@@ -123,10 +98,10 @@ class VideoCallingActivity : AppCompatActivity(){
                     if (data != null) {
                         if (data.status != "RINGING") {
                             // Remove notification
-                            val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                            val manager = context.getSystemService(AppCompatActivity.NOTIFICATION_SERVICE) as NotificationManager
                             manager.cancel(FirebaseMessagingService.NOTIFICATION_ID)
                             listener?.remove()
-                            finish()
+                            callStatus.postValue(Call.Status.CALL_STATUS_ENDED)
                         }
                     }
                 }
@@ -138,62 +113,67 @@ class VideoCallingActivity : AppCompatActivity(){
                         .collection("messages")
                         .add(
                             TextMessage(
-                            text = "Video call",
-                            sendBy = user.uid,
-                            deliveryStatus = DeliveryStatus.SENT
-                        )
+                                text = "Video call",
+                                sendBy = user.uid,
+                                deliveryStatus = DeliveryStatus.SENT
+                            )
                         )
                 }
             }
             CallMode.CALL_MODE_ANSWER -> {
                 // Retrieve
-                val callData = intent.extras?.getParcelable<Call>("call_data")
+                val callData = extras.getParcelable<Call>("call_data")
 
                 callInfoRef = database.collection("calls_info").document(callData!!.uid)
                 callRef = database.collection("calls").document(callData.uid)
 
-                answeringCallWithPermissionCheck()
+                answerCall(surfaceViewLocalRTC, surfaceViewRemoteRTC)
             }
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-
-        videoRtcClient.end()
-        callInfoRef.update("status", Call.Status.CALL_STATUS_ENDED)
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        // NOTE: delegate the permission handling to generated method
-        onRequestPermissionsResult(requestCode, grantResults)
-    }
-
-    @NeedsPermission(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
-    fun initializeCall() {
+    private fun initializeCall(surfaceViewLocalRTC: SurfaceViewRenderer, surfaceViewRemoteRTC: SurfaceViewRenderer) {
         // Initialize WebRTC
-        videoRtcClient = VideoRTCClient(this,
-        object : PeerConnectionObserver() {
-            override fun onIceCandidate(p0: IceCandidate?) {
-                super.onIceCandidate(p0)
-                videoRtcClient.addIceCandidate(p0)
+        videoRtcClient = VideoRTCClient(context,
+            object : PeerConnectionObserver() {
+                override fun onIceCandidate(p0: IceCandidate?) {
+                    super.onIceCandidate(p0)
+                    videoRtcClient.addIceCandidate(p0)
 
-                // Store Ice Candidate into Firestore
-                if (p0 != null) {
-                    callRef.collection("offerCandidates").add(p0)
+                    // Store Ice Candidate into Firestore
+                    if (p0 != null) {
+                        callRef.collection("offerCandidates").add(p0)
+                    }
                 }
-            }
 
-            override fun onAddStream(p0: MediaStream?) {
-                super.onAddStream(p0)
-                p0?.videoTracks?.get(0)?.addSink(binding.surfaceViewRemoteRTC)
-            }
-        })
+                override fun onAddStream(p0: MediaStream?) {
+                    super.onAddStream(p0)
+                    p0?.videoTracks?.get(0)?.addSink(surfaceViewRemoteRTC)
+                }
 
-        videoRtcClient.initSurfaceView(binding.surfaceViewRemoteRTC)
-        videoRtcClient.initSurfaceView(binding.surfaceViewLocalRTC)
-        videoRtcClient.startLocalAudioVideoCapture(binding.surfaceViewLocalRTC)
+                override fun onConnectionChange(newState: PeerConnection.PeerConnectionState?) {
+                    super.onConnectionChange(newState)
+
+                    when(newState) {
+                        PeerConnection.PeerConnectionState.CONNECTING -> {
+
+                        }
+                        PeerConnection.PeerConnectionState.CONNECTED -> {
+                            callStatus.postValue(Call.Status.CALL_STATUS_CONNECTED)
+                        }
+                        PeerConnection.PeerConnectionState.CLOSED -> {
+                            callStatus.postValue(Call.Status.CALL_STATUS_ENDED)
+                            endCall()
+                        }
+
+                        else -> {}
+                    }
+                }
+            })
+
+        videoRtcClient.initSurfaceView(surfaceViewRemoteRTC)
+        videoRtcClient.initSurfaceView(surfaceViewLocalRTC)
+        videoRtcClient.startLocalAudioVideoCapture(surfaceViewLocalRTC)
 
         videoRtcClient.call(sdpOfferObserver)
 
@@ -227,10 +207,9 @@ class VideoCallingActivity : AppCompatActivity(){
 
     }
 
-    @NeedsPermission(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
-    fun answeringCall() {
+    private fun answerCall(surfaceViewLocalRTC: SurfaceViewRenderer, surfaceViewRemoteRTC: SurfaceViewRenderer) {
         // Initialize WebRTC
-        videoRtcClient = VideoRTCClient(this,
+        videoRtcClient = VideoRTCClient(context,
             object : PeerConnectionObserver() {
                 override fun onIceCandidate(p0: IceCandidate?) {
                     super.onIceCandidate(p0)
@@ -244,13 +223,32 @@ class VideoCallingActivity : AppCompatActivity(){
 
                 override fun onAddStream(p0: MediaStream?) {
                     super.onAddStream(p0)
-                    p0?.videoTracks?.get(0)?.addSink(binding.surfaceViewRemoteRTC)
+                    p0?.videoTracks?.get(0)?.addSink(surfaceViewRemoteRTC)
+                }
+
+                override fun onConnectionChange(newState: PeerConnection.PeerConnectionState?) {
+                    super.onConnectionChange(newState)
+
+                    when(newState) {
+                        PeerConnection.PeerConnectionState.CONNECTING -> {
+
+                        }
+                        PeerConnection.PeerConnectionState.CONNECTED -> {
+                            callStatus.postValue(Call.Status.CALL_STATUS_CONNECTED)
+                        }
+                        PeerConnection.PeerConnectionState.CLOSED -> {
+                            callStatus.postValue(Call.Status.CALL_STATUS_ENDED)
+                            endCall()
+                        }
+
+                        else -> {}
+                    }
                 }
             })
 
-        videoRtcClient.initSurfaceView(binding.surfaceViewRemoteRTC)
-        videoRtcClient.initSurfaceView(binding.surfaceViewLocalRTC)
-        videoRtcClient.startLocalAudioVideoCapture(binding.surfaceViewLocalRTC)
+        videoRtcClient.initSurfaceView(surfaceViewRemoteRTC)
+        videoRtcClient.initSurfaceView(surfaceViewLocalRTC)
+        videoRtcClient.startLocalAudioVideoCapture(surfaceViewLocalRTC)
 
         callRef.get().addOnSuccessListener { doc ->
             val desc = doc.get("offer")
@@ -279,44 +277,25 @@ class VideoCallingActivity : AppCompatActivity(){
         }
     }
 
-    @OnShowRationale(Manifest.permission.RECORD_AUDIO)
-    fun showRationaleForAudio(request: PermissionRequest) {
-        showRationaleDialog(R.string.permission_record_audio_rationale, request)
+    fun endCall() {
+        videoRtcClient.end()
+        callInfoRef.update("status", Call.Status.CALL_STATUS_ENDED)
     }
 
-    @OnPermissionDenied(Manifest.permission.RECORD_AUDIO)
-    fun onRecordAudioDenied() {
-
+    fun onMicClick(isChecked: Boolean) {
+        audioManager.isMicrophoneMute = isChecked
     }
 
-    @OnNeverAskAgain(Manifest.permission.RECORD_AUDIO)
-    fun onRecordAudioNeverAskAgain() {
-        Toast.makeText(this, "Please grant microphone permission", Toast.LENGTH_SHORT).show()
-        finish()
+    @dagger.assisted.AssistedFactory
+    interface AssistedFactory{
+        fun create(@Named("extras") extras: Bundle): VideoCallViewModel
     }
 
-    @OnShowRationale(Manifest.permission.CAMERA)
-    fun showRationaleForCamera(request: PermissionRequest) {
-        showRationaleDialog(R.string.permission_camera_rationale, request)
-    }
-
-    @OnPermissionDenied(Manifest.permission.CAMERA)
-    fun onCameraDenied() {
-
-    }
-
-    @OnNeverAskAgain(Manifest.permission.CAMERA)
-    fun onCameraNeverAskAgain() {
-        Toast.makeText(this, "Please grant camera permission", Toast.LENGTH_SHORT).show()
-        finish()
-    }
-
-    private fun showRationaleDialog(@StringRes messageResId: Int, request: PermissionRequest) {
-        AlertDialog.Builder(this)
-            .setPositiveButton(R.string.button_allow) { _, _ -> request.proceed() }
-            .setNegativeButton(R.string.button_deny) { _, _ -> request.cancel() }
-            .setCancelable(false)
-            .setMessage(messageResId)
-            .show()
+    companion object {
+        fun providesFactory(assistedFactory: AssistedFactory, extras: Bundle): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return assistedFactory.create(extras) as T
+            }
+        }
     }
 }

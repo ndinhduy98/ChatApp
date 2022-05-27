@@ -1,48 +1,42 @@
-package com.freezer.chatapp.ui.call
+package com.freezer.chatapp.data.viewmodel
 
-import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioManager
 import android.os.Bundle
-import android.widget.Toast
-import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.freezer.chatapp.R
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.freezer.chatapp.data.model.Call
 import com.freezer.chatapp.data.model.DeliveryStatus
 import com.freezer.chatapp.data.model.Profile
 import com.freezer.chatapp.data.model.TextMessage
-import com.freezer.chatapp.databinding.ActivityCallingAudioBinding
 import com.freezer.chatapp.fcm.FirebaseMessagingService
-import com.freezer.chatapp.webrtc.*
-import com.google.firebase.auth.FirebaseAuth
+import com.freezer.chatapp.webrtc.AppSdpObserver
+import com.freezer.chatapp.webrtc.AudioRTCClient
+import com.freezer.chatapp.webrtc.CallMode
+import com.freezer.chatapp.webrtc.PeerConnectionObserver
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ActivityContext
 import org.webrtc.IceCandidate
 import org.webrtc.PeerConnection
 import org.webrtc.SessionDescription
-import permissions.dispatcher.*
-import java.util.*
-import kotlin.collections.HashMap
+import javax.inject.Named
 
-@RuntimePermissions
-class AudioCallingActivity : AppCompatActivity(){
-    private lateinit var binding : ActivityCallingAudioBinding
-
-    private lateinit var database: FirebaseFirestore
-    private lateinit var user: FirebaseUser
-
-    // Timeout timer
-    private lateinit var timer: Timer
-
-    // Firestore Ref
+class AudioCallViewModel @AssistedInject constructor(
+    @Named("user") private val user: FirebaseUser?,
+    @Named("database") private val database: FirebaseFirestore,
+    @ActivityContext private val context: Context,
+    @Assisted private val extras: Bundle
+) : ViewModel() {
+    // Firestore ref
     private lateinit var callRef: DocumentReference
     private lateinit var callInfoRef: DocumentReference
 
@@ -50,9 +44,10 @@ class AudioCallingActivity : AppCompatActivity(){
     private lateinit var audioRtcClient: AudioRTCClient
 
     // Audio manager
-    private lateinit var audioManager: AudioManager
+    private val audioManager: AudioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-    // Speaker switch
+    // Call status
+    val callStatus = MutableLiveData<String>()
 
     // SDP Observer
     private val sdpOfferObserver = object : AppSdpObserver() {
@@ -77,62 +72,29 @@ class AudioCallingActivity : AppCompatActivity(){
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        binding = ActivityCallingAudioBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
+    fun initialize() {
         // Set speaker to front speaker
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         audioManager.mode = AudioManager.MODE_IN_CALL
         audioManager.isSpeakerphoneOn = false
 
-        binding.imageButtonCallEnd.setOnClickListener {
-            Toast.makeText(this, "Call ended", Toast.LENGTH_SHORT).show()
-            finish()
-        }
+        callInfoRef = database.collection("calls_info").document()
+        callRef = database.collection("calls").document(callInfoRef.id)
 
-        binding.tgCallMic.setOnCheckedChangeListener { _, isChecked ->
-            audioManager.isMicrophoneMute = isChecked
-        }
-
-        binding.tgCallSpeaker.setOnCheckedChangeListener { _, isChecked ->
-            if(isChecked) {
-                audioManager.mode = AudioManager.MODE_NORMAL
-                audioManager.isSpeakerphoneOn = true
-            } else {
-                audioManager.mode = AudioManager.MODE_IN_CALL
-                audioManager.isSpeakerphoneOn = false
-            }
-        }
-
-        database = Firebase.firestore
-        user = FirebaseAuth.getInstance().currentUser!!
-
-        if(intent.extras?.getString("notification_action") == "hang_up") {
-            finish()
-        }
-
-        when(intent.extras?.getString("calling_mode")) {
+        when(extras.getString("calling_mode")) {
             CallMode.CALL_MODE_OFFER -> {
                 // Retrieve target profile
-                val profile = intent.extras?.getParcelable<Profile>("profile")
-                val groupId = intent.extras?.getString("group_id")
-
-                // Send call data to database
-                callInfoRef = database.collection("calls_info").document()
-                callRef = database.collection("calls").document(callInfoRef.id)
+                val profile = extras.getParcelable<Profile>("profile")
+                val groupId = extras.getString("group_id")
 
                 callInfoRef.set(
                     Call(
                         uid = callRef.id,
-                        from = user.uid,
+                        from = user!!.uid,
                         to = profile!!.uid,
                         callType = Call.Type.CALL_TYPE_AUDIO
                     )
                 ).addOnSuccessListener {
-                    initializeCallWithPermissionCheck()
+                    initializeCall()
                 }
 
                 var listener: ListenerRegistration? = null
@@ -141,10 +103,10 @@ class AudioCallingActivity : AppCompatActivity(){
                     if (data != null) {
                         if (data.status != "RINGING") {
                             // Remove notification
-                            val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                            val manager = context.getSystemService(AppCompatActivity.NOTIFICATION_SERVICE) as NotificationManager
                             manager.cancel(FirebaseMessagingService.NOTIFICATION_ID)
                             listener?.remove()
-                            finish()
+                            callStatus.postValue(Call.Status.CALL_STATUS_ENDED)
                         }
                     }
                 }
@@ -154,16 +116,18 @@ class AudioCallingActivity : AppCompatActivity(){
                     database.collection("message")
                         .document(it)
                         .collection("messages")
-                        .add(TextMessage(
+                        .add(
+                            TextMessage(
                             text = "Audio call",
                             sendBy = user.uid,
                             deliveryStatus = DeliveryStatus.SENT
-                        ))
+                        )
+                        )
                 }
             }
             CallMode.CALL_MODE_ANSWER -> {
                 // Retrieve
-                val callData = intent.extras?.getParcelable<Call>("call_data")
+                val callData = extras.getParcelable<Call>("call_data")
 
                 callInfoRef = database.collection("calls_info").document(callData!!.uid)
                 callRef = database.collection("calls").document(callData.uid)
@@ -174,36 +138,34 @@ class AudioCallingActivity : AppCompatActivity(){
                     if (data != null) {
                         if (data.status != "RINGING") {
                             // Remove notification
-                            val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                            val manager = context.getSystemService(AppCompatActivity.NOTIFICATION_SERVICE) as NotificationManager
                             manager.cancel(FirebaseMessagingService.NOTIFICATION_ID)
                             listener?.remove()
-                            finish()
+                            callStatus.postValue(Call.Status.CALL_STATUS_ENDED)
                         }
                     }
                 }
-
-                answeringCallWithPermissionCheck()
+                answerCall()
             }
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-
-        audioRtcClient.end()
-        callInfoRef.update("status", Call.Status.CALL_STATUS_ENDED)
+    fun onMicClick(isChecked: Boolean) {
+        audioManager.isMicrophoneMute = isChecked
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        // NOTE: delegate the permission handling to generated method
-        onRequestPermissionsResult(requestCode, grantResults)
+    fun onSpeakerClick(isChecked: Boolean) {
+        if(isChecked) {
+            audioManager.mode = AudioManager.MODE_NORMAL
+            audioManager.isSpeakerphoneOn = true
+        } else {
+            audioManager.mode = AudioManager.MODE_IN_CALL
+            audioManager.isSpeakerphoneOn = false
+        }
     }
 
-    @NeedsPermission(Manifest.permission.RECORD_AUDIO)
-    fun initializeCall() {
-        // Initialize WebRTC
-        audioRtcClient = AudioRTCClient(this,
+    private fun initializeCall() {
+        audioRtcClient = AudioRTCClient(context,
             object : PeerConnectionObserver() {
                 override fun onIceCandidate(p0: IceCandidate?) {
                     super.onIceCandidate(p0)
@@ -223,11 +185,11 @@ class AudioCallingActivity : AppCompatActivity(){
 
                         }
                         PeerConnection.PeerConnectionState.CONNECTED -> {
-                            binding.textViewCallStatus.text = "Connected"
-                            binding.chronometerCall.start()
+                            callStatus.postValue(Call.Status.CALL_STATUS_CONNECTED)
                         }
                         PeerConnection.PeerConnectionState.CLOSED -> {
-                            finish()
+                            callStatus.postValue(Call.Status.CALL_STATUS_ENDED)
+                            endCall()
                         }
 
                         else -> {}
@@ -263,15 +225,11 @@ class AudioCallingActivity : AppCompatActivity(){
                 }
             }
         }
-
-        // End call if exceed 30 seconds
-
     }
 
-    @NeedsPermission(Manifest.permission.RECORD_AUDIO)
-    fun answeringCall() {
+    private fun answerCall() {
         // Initialize WebRTC
-        audioRtcClient = AudioRTCClient(this,
+        audioRtcClient = AudioRTCClient(context,
             object : PeerConnectionObserver() {
                 override fun onIceCandidate(p0: IceCandidate?) {
                     super.onIceCandidate(p0)
@@ -291,11 +249,11 @@ class AudioCallingActivity : AppCompatActivity(){
 
                         }
                         PeerConnection.PeerConnectionState.CONNECTED -> {
-                            binding.textViewCallStatus.text = "Connected"
-                            binding.chronometerCall.start()
+                            callStatus.postValue(Call.Status.CALL_STATUS_CONNECTED)
                         }
-                        PeerConnection.PeerConnectionState.CLOSED, PeerConnection.PeerConnectionState.DISCONNECTED -> {
-                            finish()
+                        PeerConnection.PeerConnectionState.CLOSED -> {
+                            callStatus.postValue(Call.Status.CALL_STATUS_ENDED)
+                            endCall()
                         }
 
                         else -> {}
@@ -332,28 +290,21 @@ class AudioCallingActivity : AppCompatActivity(){
         }
     }
 
-    @OnShowRationale(Manifest.permission.RECORD_AUDIO)
-    fun showRationaleForAudio(request: PermissionRequest) {
-        showRationaleDialog(R.string.permission_record_audio_rationale, request)
+    fun endCall() {
+        audioRtcClient.end()
+        callInfoRef.update("status", Call.Status.CALL_STATUS_ENDED)
     }
 
-    @OnPermissionDenied(Manifest.permission.RECORD_AUDIO)
-    fun onRecordAudioDenied() {
-
+    @dagger.assisted.AssistedFactory
+    interface AssistedFactory{
+        fun create(@Named("extras") extras: Bundle): AudioCallViewModel
     }
 
-    @OnNeverAskAgain(Manifest.permission.RECORD_AUDIO)
-    fun onRecordAudioNeverAskAgain() {
-        Toast.makeText(this, "Please grant microphone permission", Toast.LENGTH_SHORT).show()
-        finish()
-    }
-
-    private fun showRationaleDialog(@StringRes messageResId: Int, request: PermissionRequest) {
-        AlertDialog.Builder(this)
-            .setPositiveButton(R.string.button_allow) { _, _ -> request.proceed() }
-            .setNegativeButton(R.string.button_deny) { _, _ -> request.cancel() }
-            .setCancelable(false)
-            .setMessage(messageResId)
-            .show()
+    companion object {
+        fun providesFactory(assistedFactory: AssistedFactory, extras: Bundle): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return assistedFactory.create(extras) as T
+            }
+        }
     }
 }

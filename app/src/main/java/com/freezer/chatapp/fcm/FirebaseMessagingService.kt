@@ -4,13 +4,12 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.freezer.chatapp.R
 import com.freezer.chatapp.data.model.Call
-import com.freezer.chatapp.ui.call.AudioCallingActivity
-import com.freezer.chatapp.ui.call.VideoCallingActivity
+import com.freezer.chatapp.ui.call.AudioCallActivity
+import com.freezer.chatapp.ui.call.VideoCallActivity
 import com.freezer.chatapp.utils.FCMUtils
 import com.freezer.chatapp.webrtc.CallMode
 import com.google.firebase.firestore.ListenerRegistration
@@ -72,10 +71,10 @@ class FirebaseMessagingService : FirebaseMessagingService() {
         }
 
         val notifyIntent = if (call.callType == Call.Type.CALL_TYPE_VIDEO)
-            Intent(this, VideoCallingActivity::class.java).apply {
+            Intent(this, VideoCallActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
-        else Intent(this, AudioCallingActivity::class.java).apply {
+        else Intent(this, AudioCallActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
 

@@ -17,7 +17,9 @@ data class Call (
     var callType: String = ""
 ) : Parcelable {
     object Status {
+        const val CALL_STATUS_PREPARE = "PREPARE"
         const val CALL_STATUS_RINGING = "RINGING"
+        const val CALL_STATUS_CONNECTED = "CONNECTED"
         const val CALL_STATUS_ENDED = "ENDED"
     }
     object Type {
